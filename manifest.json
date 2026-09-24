@@ -1,7 +1,7 @@
 {
   "name": "Cartera del Tirador",
   "short_name": "Cartera Tirador",
-  "description": "Cartera privada de documents i control de tirades del tirador.",
+  "description": "Cartera privada de documentos del tirador.",
   "lang": "ca",
   "dir": "ltr",
   "start_url": "./index.html",

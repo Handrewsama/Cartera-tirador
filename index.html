@@ -2,7 +2,7 @@
 <html lang="ca">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Cartera del Tirador</title>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#10141a">
@@ -10,117 +10,119 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
     :root {
-      --bg-color: #10141a;
-      --card-bg: #1a202c;
-      --text-color: #f7fafc;
-      --accent-color: #3182ce;
-      --danger-color: #e53e3e;
-      --warning-color: #dd6b20;
-      --success-color: #38a169;
+      --bg: #10141a;
+      --card: #161c24;
+      --text: #ffffff;
+      --text-muted: #8e9aa8;
+      --accent: #ff4757;
+      --accent-green: #2ed573;
+      --accent-blue: #1e90ff;
+      --border: rgba(255,255,255,0.08);
+      --danger: #ff4757;
     }
     body.light-mode {
-      --bg-color: #f7fafc;
-      --card-bg: #ffffff;
-      --text-color: #1a202c;
-      --accent-color: #2b6cb0;
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --text: #2f3640;
+      --text-muted: #718093;
+      --accent: #ee5253;
+      --accent-green: #10ac84;
+      --accent-blue: #2e86de;
+      --border: rgba(0,0,0,0.06);
     }
     body {
+      margin: 0; padding: 0;
+      background-color: var(--bg);
+      color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 0;
-      padding-bottom: 85px;
+      padding-bottom: 75px;
     }
     header {
-      background-color: var(--card-bg);
-      padding: 15px;
-      text-align: center;
-      border-bottom: 1px solid #2d3748;
+      padding: 20px 15px; text-align: center;
+      border-bottom: 1px solid var(--border); background: var(--card);
     }
-    h1 { margin: 0; font-size: 1.3rem; }
+    h1 { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; }
     .contenidor { padding: 15px; }
+    
     .pestanya-contingut { display: none; }
     .pestanya-contingut.activa { display: block; }
-    
+
+    /* Alerta de Seguretat Obligatòria */
     .alerta-caducitat {
-      background-color: rgba(229, 62, 62, 0.2);
-      border: 1px solid var(--danger-color);
-      color: #fc8181;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      font-weight: bold;
-      display: none;
+      background: rgba(255, 71, 87, 0.12); border: 1px solid var(--danger);
+      color: #ff6b81; padding: 14px; border-radius: 10px; margin-bottom: 15px;
+      font-size: 0.9rem; font-weight: 600; line-height: 1.4; display: none;
     }
-    body.light-mode .alerta-caducitat {
-      background-color: #fff5f5;
-      color: var(--danger-color);
-    }
+    body.light-mode .alerta-caducitat { background: #fff5f5; color: var(--danger); }
 
-    .camp { margin-bottom: 12px; }
-    label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
-    input, select, button {
-      width: 100%; padding: 12px; border-radius: 6px; box-sizing: border-box;
-      border: 1px solid #4a5568; background-color: var(--card-bg); color: var(--text-color);
-      font-size: 1rem;
-    }
-    button {
-      background-color: var(--accent-color); color: white; border: none;
-      font-weight: bold; cursor: pointer; margin-top: 5px;
+    /* Estil net original dels formularis */
+    .camp { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; }
+    input[type="text"], input[type="date"], select {
+      width: 100%; padding: 12px; border-radius: 8px; box-sizing: border-box;
+      border: 1px solid var(--border); background: var(--card); color: var(--text);
+      font-size: 1rem; transition: border 0.2s;
     }
     
-    .llista-tirades, .llista-documents { list-style: none; padding: 0; margin: 15px 0; }
-    .item-targeta {
-      background-color: var(--card-bg); padding: 15px; border-radius: 8px;
-      margin-bottom: 12px; border-left: 4px solid var(--accent-color);
+    /* Botons Natius Amigables */
+    .boto-grup { display: flex; gap: 10px; margin-top: 5px; }
+    .boto-opcio {
+      flex: 1; padding: 12px; background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; text-align: center;
     }
-    .item-header {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+    .boto-opcio.actiu {
+      background: var(--accent-blue); border-color: var(--accent-blue); color: white;
     }
-    .imatge-doc {
-      width: 100%; max-height: 250px; object-fit: contain; 
-      border-radius: 6px; background-color: #000; margin-top: 8px;
+    button.boto-principal {
+      width: 100%; padding: 14px; background: var(--accent-blue); color: white;
+      border: none; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer;
     }
 
+    /* Targetes de la llista originals */
+    .llista-elements { list-style: none; padding: 0; margin: 20px 0; }
+    .element-card {
+      background: var(--card); border: 1px solid var(--border); padding: 15px;
+      border-radius: 12px; margin-bottom: 15px;
+    }
+    .element-header { display: flex; justify-content: space-between; align-items: center; }
+    .element-info strong { font-size: 1.1rem; }
+    .element-info span { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; }
+    .imatge-preview { width: 100%; border-radius: 8px; margin-top: 12px; background: #000; max-height: 300px; object-fit: contain; }
+
+    /* Llista de Tirades estil original */
     .item-tirada {
-      background-color: var(--card-bg); padding: 12px; border-radius: 8px;
-      margin-bottom: 10px; border-left: 4px solid var(--accent-color);
-      display: flex; justify-content: space-between; align-items: center;
+      background: var(--card); border: 1px solid var(--border); padding: 12px 15px;
+      border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
     }
-    .item-tirada.oficial { border-left-color: var(--success-color); }
-    .item-tirada.controlada { border-left-color: var(--accent-color); }
-    .item-tirada.categoria { border-left-color: #805ad5; }
-    .item-tirada.avis-futur { border-left-color: var(--warning-color); }
-    
-    .boto-eliminar {
-      background-color: var(--danger-color); width: auto; padding: 6px 12px; font-size: 0.8rem; margin: 0;
+    .item-tirada::before {
+      content: ''; width: 4px; height: 24px; border-radius: 2px; margin-right: 12px; display: inline-block;
     }
+    .item-tirada.controlada::before { background: var(--accent-blue); }
+    .item-tirada.oficial::before { background: var(--accent-green); }
+    .item-tirada.categoria::before { background: #9b5de5; }
+    .item-tirada.avis-futur::before { background: #f15bb5; }
+    .tirada-detalls { flex-grow: 1; }
 
-    .caixa-info {
-      background-color: rgba(49, 130, 206, 0.1);
-      border: 1px solid var(--accent-color);
-      padding: 15px; border-radius: 8px; line-height: 1.5; font-size: 0.9rem;
-    }
-    .caixa-info ol { padding-left: 20px; margin: 10px 0 0 0; }
+    .boto-del { background: none; border: none; color: var(--danger); font-weight: bold; font-size: 0.9rem; cursor: pointer; }
 
+    /* Barra de Navegació Inferior Original */
     nav.barra-inferior {
       position: fixed; bottom: 0; left: 0; width: 100%; height: 65px;
-      background-color: var(--card-bg); border-top: 1px solid #2d3748;
+      background: var(--card); border-top: 1px solid var(--border);
       display: flex; justify-content: space-around; align-items: center;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
     }
     .boto-nav {
-      background: none; border: none; color: var(--text-color); opacity: 0.6;
-      font-size: 0.85rem; text-align: center; width: 33.33%; height: 100%; margin: 0; padding: 0;
+      background: none; border: none; color: var(--text-muted);
+      font-size: 0.9rem; font-weight: 600; text-align: center; width: 50%; height: 100%;
     }
-    .boto-nav.actiu { opacity: 1; font-weight: bold; border-top: 4px solid var(--accent-color); }
+    .boto-nav.actiu { color: var(--text); border-top: 3px solid var(--accent); opacity: 1; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1 id="titol-header">Cartera del Tirador</h1>
+    <h1>Cartera del tirador</h1>
   </header>
 
   <div class="contenidor">
@@ -128,97 +130,58 @@
       ⚠️ ATENCIÓ: No s'ha detectat cap Tirada Oficial o Controlada en els últims 12 mesos. Risc de pèrdua de llicència o categoria!
     </div>
 
-    <!-- PESTANYA 1: DOCUMENTS (CÀMERA I FOTOS) -->
+    <!-- PESTANYA 1: DOCUMENTS -->
     <main id="pestanya-documents" class="pestanya-contingut activa">
-      <h2>Els teus Documents i Llicències</h2>
-      <form id="formulari-document">
-        <div class="camp">
-          <label>Tipus de document:</label>
-          <select id="categoria-doc">
-            <option value="Llicència d'Armes">Llicència d'Armes (F, D, E...)</option>
-            <option value="Llicència federativa">Llicència federativa</option>
-            <option value="Guia d'arma">Guia d'arma</option>
-            <option value="Targeta de soci">Targeta de soci</option>
-            <option value="Altres documents">Altres</option>
-          </select>
-        </div>
-        <div class="camp">
-          <label>Títol o Descripció:</label>
-          <input type="text" id="titol-doc" placeholder="Ex: Llicència F, Guia Glock 17..." required>
-        </div>
-        <div class="camp">
-          <label>Fes una foto o tria un arxiu:</label>
-          <input type="file" id="arxiu-doc" accept="image/*" capture="environment" required>
-        </div>
-        <button type="submit">Guardar a la Cartera</button>
-      </form>
+      <div id="vista-llista-docs">
+        <button class="boto-principal" onclick="mostrarFormulariDoc(true)">+ Afegir document</button>
+        <ul id="llista-docs" class="llista-elements"></ul>
+      </div>
 
-      <ul id="llista-docs" class="llista-documents"></ul>
+      <!-- Formulari d'addició amb la interfície neta original -->
+      <div id="formulari-doc-pantalla" style="display:none;">
+        <h3>Afegir document</h3>
+        <form id="formulari-document">
+          <div class="camp">
+            <label>Categoria</label>
+            <select id="categoria-doc">
+              <option value="Llicència federativa">Llicència federativa</option>
+              <option value="Targeta de soci">Targeta de soci</option>
+              <option value="Guia d'arma">Guia d'arma</option>
+              <option value="Altres">Altres</option>
+            </select>
+          </div>
+          <div class="camp">
+            <label>Títol</label>
+            <input type="text" id="titol-doc" placeholder="Nom de la llicència o arma" required>
+          </div>
+          <div class="camp">
+            <label>Imatges</label>
+            <!-- Aquest input ocult permet l'accés unificat de l'iPhone a Fototeca / Càmera / Fitxers -->
+            <input type="file" id="arxiu-doc" accept="image/*" style="display:none;">
+            <div class="boto-grup">
+              <button type="button" class="boto-opcio" onclick="activarSelectorFitxer()">Pujar imatges / Fer foto</button>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">L'iPhone us permetrà triar fotos guardades, documents o fer servir la càmera.</p>
+            <div id="nom-fitxer-escollit" style="font-size:0.85rem; margin-top:5px; font-weight:600; color:var(--accent-green);"></div>
+          </div>
+          <div class="boto-grup" style="margin-top:25px;">
+            <button type="submit" class="boto-principal" style="background:var(--accent-green);">Desar document</button>
+            <button type="button" class="boto-opcio" onclick="mostrarFormulariDoc(false)">Cancel·la</button>
+          </div>
+        </form>
+      </div>
     </main>
 
-    <!-- PESTANYA 2: CALENDARI I HISTORIAL -->
-    <main id="pestanya-calendari" class="pestanya-contingut">
-      <h2>Calendari de Tirades</h2>
-      <form id="formulari-tirada">
-        <div class="camp">
-          <label>Tipus de Tirada:</label>
-          <select id="tipus-tirada" required>
-            <option value="controlada">Tirada Controlada (Manteniment)</option>
-            <option value="oficial">Tirada Oficial</option>
-            <option value="categoria">Tirada per Pujar de Categoria</option>
-            <option value="avis-futur">Avís / Tirada Programada (Futur)</option>
-          </select>
-        </div>
-        <div class="camp">
-          <label>Data de l'esdeveniment:</label>
-          <input type="date" id="data-tirada" required>
-        </div>
-        <div class="camp">
-          <label>Competició o Club de Tir:</label>
-          <input type="text" id="nom-tirada" placeholder="Ex: Tirada de Club, Campionat..." required>
-        </div>
-        <button type="submit">Registrar al Calendari</button>
-      </form>
-
-      <h3>Pròxims Avisos i Planificacions</h3>
-      <ul id="llista-avisos" class="llista-tirades"></ul>
-
-      <h3>Historial de Tirades Realitzades</h3>
-      <ul id="llista-historial" class="llista-tirades"></ul>
-    </main>
-
-    <!-- PESTANYA 3: CONFIGURACIÓ (RUTES I APARÈNCIA) -->
-    <main id="pestanya-configuracio" class="pestanya-contingut">
-      <h2>⚙️ Configuració de l'App</h2>
-      
-      <h3>Carpeta de Guardat al Telèfon</h3>
-      <div class="caixa-info">
-        <p><strong>Nota de privacitat del teu iPhone:</strong><br>
-        Per motius de seguretat d'Apple (Sandbox), cap aplicació web PWA té permís per canviar de manera interna les carpetes del sistema de fitxers del telèfon.</p>
-        <p>Per descarregar les teves còpies de seguretat o llicències en una <strong>nova carpeta específica</strong> a l'iPhone, configura-ho a l'iOS així:</p>
-        <ol>
-          <li>Obre l'aplicació <strong>Ajustos</strong> de l'iPhone.</li>
-          <li>Busca i prem a <strong>Safari</strong>.</li>
-          <li>Entra a l'opció <strong>Baixades</strong> (Downloads).</li>
-          <li>Tria <strong>Altres...</strong> (Other...) i selecciona o crea la nova carpeta que vulguis dins d'iCloud Drive o de l'emmagatzematge local del teu iPhone.</li>
-        </ol>
-      </div>
-
-      <h3 style="margin-top:25px;">Personalització</h3>
-      <div class="camp">
-        <button type="button" onclick="canviarAparença()" style="background-color:#4a5568;">Canviar Aparença (Fosc / Clar)</button>
-      </div>
-      
-      <div class="camp" style="margin-top: 15px;">
-        <button type="button" onclick="exportarDades()" style="background-color:#2b6cb0;">Generar Còpia de Seguretat (JSON)</button>
-      </div>
+    <!-- PESTANYA 2: MÉS (CARREGADA DES DE TIRADOR-APP.HTML) -->
+    <main id="pestanya-mes" class="pestanya-contingut">
+      <!-- El contingut es carregarà dinàmicament aquí des de tirador-app.html -->
+      <div id="contingut-app-mes"></div>
     </main>
   </div>
 
   <nav class="barra-inferior">
-    <button class="boto-nav actiu" onclick="canviarPestanya('documents', this)">📁 Documents</button>
-    <button class="boto-nav" onclick="canviarPestanya('calendari', this)">📅 Calendari</button>
-    <button class="boto-nav" onclick="canviarPestanya('configuracio', this)">⚙️ Ajustos</button>
+    <button class="boto-nav actiu" onclick="canviarPestanya('documents', this)">Documents</button>
+    <button class="boto-nav" onclick="canviarPestanya('mes', this)">Més</button>
   </nav>
 
   <script>
@@ -238,7 +201,7 @@
     request.onsuccess = event => {
       db = event.target.result;
       carregarDocuments();
-      carregarTirades();
+      comprovarAlertesTirades();
     };
 
     function canviarPestanya(pestanya, boto) {
@@ -246,164 +209,136 @@
       document.querySelectorAll('.boto-nav').forEach(b => b.classList.remove('actiu'));
       document.getElementById('pestanya-' + pestanya).classList.add('activa');
       boto.classList.add('actiu');
+
+      if (pestanya === 'mes') {
+        carregarPestanyaMes();
+      } else {
+        carregarDocuments();
+      }
     }
 
-    function canviarAparença() {
-      document.body.classList.toggle('light-mode');
+    function mostrarFormulariDoc(visible) {
+      document.getElementById('vista-llista-docs').style.display = visible ? 'none' : 'block';
+      document.getElementById('formulari-doc-pantalla').style.display = visible ? 'block' : 'none';
     }
 
-    document.getElementById('formulari-document').addEventListener('submit', e => {
-      e.preventDefault();
-      const categoria = document.getElementById('categoria-doc').value;
-      const titol = document.getElementById('titol-doc').value;
-      const fitxerInput = document.getElementById('arxiu-doc').files;
+    function activarSelectorFitxer() {
+      document.getElementById('arxiu-doc').click();
+    }
 
-      if (fitxerInput.length > 0) {
-        const lector = new FileReader();
-        lector.onload = function(event) {
-          const imatgeBase64 = event.target.result;
-
-          const transaccio = db.transaction(['documents'], 'readwrite');
-          const magatzem = transaccio.objectStore('documents');
-          magatzem.add({ categoria, titol, imatge: imatgeBase64 });
-
-          transaccio.oncomplete = () => {
-            document.getElementById('formulari-document').reset();
-            carregarDocuments();
-          };
-        };
-        lector.readAsDataURL(fitxerInput[0]);
+    document.getElementById('arxiu-doc').addEventListener('change', e => {
+      const fitxer = e.target.files[0];
+      if(fitxer) {
+        document.getElementById('nom-fitxer-escollit').innerText = "✓ " + fitxer.name;
       }
     });
 
-    function carregarDocuments() {
-      const ul = document.getElementById('llista-docs');
-      ul.innerHTML = '';
-      
-      const transaccio = db.transaction(['documents'], 'readonly');
-      transaccio.objectStore('documents').openCursor().onsuccess = event => {
-        const cursor = event.target.result;
-        if (cursor) {
-          const doc = cursor.value;
-          const li = document.createElement('li');
-          li.className = 'item-targeta';
-          
-          li.innerHTML = `
-            <div class="item-header">
-              <div>
-                <strong>${doc.titol}</strong><br>
-                <small style="color: #a0aec0;">${doc.categoria}</small>
-              </div>
-              <button class="boto-eliminar" onclick="eliminarDoc(${doc.id})">Eliminar</button>
-            </div>
-            <img src="${doc.imatge}" class="imatge-doc" alt="Document">
-          `;
-          ul.appendChild(li);
-          cursor.continue();
-        }
-      };
-    }
+      // Càrrega asíncrona neta del fitxer tirador-app.html
+  function carregarPestanyaMes() {
+    fetch('./tirador-app.html')
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById('contingut-app-mes').innerHTML = html;
+        inicialitzarModulTirades();
+      })
+      .catch(err => console.error("Error al carregar la secció Més:", err));
+  }
 
-    function eliminarDoc(id) {
-      if(confirm("Segur que vols eliminar aquest document de la cartera?")) {
+  document.getElementById('formulari-document').addEventListener('submit', e => {
+    e.preventDefault();
+    const categoria = document.getElementById('categoria-doc').value;
+    const titol = document.getElementById('titol-doc').value;
+    const fitxerInput = document.getElementById('arxiu-doc').files[0];
+
+    if (fitxerInput) {
+      const lector = new FileReader();
+      lector.onload = function(event) {
+        const imatgeBase64 = event.target.result;
         const transaccio = db.transaction(['documents'], 'readwrite');
-        transaccio.objectStore('documents').delete(id);
-        transaccio.oncomplete = () => carregarDocuments();
-      }
-    }
-
-    document.getElementById('formulari-tirada').addEventListener('submit', e => {
-      e.preventDefault();
-      const tipus = document.getElementById('tipus-tirada').value;
-      const data = document.getElementById('data-tirada').value;
-      const nom = document.getElementById('nom-tirada').value;
-
-      const transaccio = db.transaction(['tirades'], 'readwrite');
-      const magatzem = transaccio.objectStore('tirades');
-      magatzem.add({ tipus, data, nom });
-
-      transaccio.oncomplete = () => {
-        document.getElementById('formulari-tirada').reset();
-        carregarTirades();
+        
+        transaccio.objectStore('documents').add({ categoria, titol, imatge: imatgeBase64 });
+        
+        transaccio.oncomplete = () => {
+          document.getElementById('formulari-document').reset();
+          document.getElementById('nom-fitxer-escollit').innerText = "";
+          mostrarFormulariDoc(false);
+          carregarDocuments();
+        };
       };
-    });
+      lector.readAsDataURL(fitxerInput);
+    }
+  });
 
-    function carregarTirades() {
-      const historialUl = document.getElementById('llista-historial');
-      const avisosUl = document.getElementById('llista-avisos');
-      historialUl.innerHTML = '';
-      avisosUl.innerHTML = '';
+  function carregarDocuments() {
+    const ul = document.getElementById('llista-docs');
+    ul.innerHTML = '';
+    const transaccio = db.transaction(['documents'], 'readonly');
+    
+    transaccio.objectStore('documents').openCursor().onsuccess = event => {
+      const cursor = event.target.result;
+      if (cursor) {
+        const doc = cursor.value;
+        const li = document.createElement('li');
+        li.className = 'element-card';
+        
+        // CORREGIT: Afegides les cometes invertides (``) per evitar l'error de sintaxi a l'HTML
+        li.innerHTML = `
+          <div class="element-header"> 
+            <div class="element-info"> 
+              <span>${doc.categoria}</span><br> 
+              <strong>${doc.titol}</strong> 
+            </div> 
+            <button class="boto-del" onclick="eliminarDoc(${doc.id})">Esborrar</button> 
+          </div> 
+          <img src="${doc.imatge}" class="imatge-preview">
+        `;
+        
+        ul.appendChild(li);
+        cursor.continue();
+      }
+    };
+  }
 
-      let ultimaTiradaFeta = null;
-      const avui = new Date();
+  function eliminarDoc(id) {
+    if (confirm("Vols esborrar aquest document?")) {
+      const transaccio = db.transaction(['documents'], 'readwrite');
+      transaccio.objectStore('documents').delete(id);
+      transaccio.oncomplete = () => carregarDocuments();
+    }
+  }
 
-      const transaccio = db.transaction(['tirades'], 'readonly');
-      const magatzem = transaccio.objectStore('tirades');
-
-      magatzem.openCursor().onsuccess = event => {
-        const cursor = event.target.result;
-        if (cursor) {
-          const tirada = cursor.value;
-          const dataTirada = new Date(tirada.data);
-
-          const li = document.createElement('li');
-          li.className = `item-tirada ${tirada.tipus}`;
-          li.innerHTML = `
-            <div>
-              <strong>${tirada.nom}</strong><br>
-              <small>${tirada.data} - ${tirada.tipus.toUpperCase()}</small>
-            </div>
-            <button class="boto-eliminar" onclick="eliminarTirada(${tirada.id})">X</button>
-          `;
-
-          if (dataTirada < avui && tirada.tipus !== 'avis-futur') {
-            historialUl.appendChild(li);
-            if (tirada.tipus === 'controlada' || tirada.tipus === 'oficial') {
-              if (!ultimaTiradaFeta || dataTirada > new Date(ultimaTiradaFeta.data)) {
-                ultimaTiradaFeta = tirada;
-              }
+  function comprovarAlertesTirades() {
+    const avui = new Date();
+    let ultimaTiradaFeta = null;
+    const transaccio = db.transaction(['tirades'], 'readonly');
+    
+    transaccio.objectStore('tirades').openCursor().onsuccess = event => {
+      const cursor = event.target.result;
+      if (cursor) {
+        const tirada = cursor.value;
+        const dataTirada = new Date(tirada.data);
+        if (dataTirada < avui && tirada.tipus !== 'avis-futur') {
+          if (tirada.tipus === 'controlada' || tirada.tipus === 'oficial') {
+            if (!ultimaTiradaFeta || dataTirada > new Date(ultimaTiradaFeta.data)) {
+              ultimaTiradaFeta = tirada;
             }
-          } else {
-            avisosUl.appendChild(li);
-          }
-          cursor.continue();
-        } else {
-          const alertaBox = document.getElementById('alerta-obligatoria');
-          if (ultimaTiradaFeta) {
-            const dataUltima = new Date(ultimaTiradaFeta.data);
-            const diferenciaMesos = (avui - dataUltima) / (1000 * 60 * 60 * 24 * 30.43);
-            if (diferenciaMesos >= 12) {
-              alertaBox.style.display = 'block';
-            } else {
-              alertaBox.style.display = 'none';
-            }
-          } else {
-            alertaBox.style.display = 'block';
           }
         }
-      };
-    }
+        cursor.continue();
+      } else {
+        const alertaBox = document.getElementById('alerta-obligatoria');
+        if (ultimaTiradaFeta) {
+          const dataUltima = new Date(ultimaTiradaFeta.data);
+          const diferenciaMesos = (avui - dataUltima) / (1000 * 60 * 60 * 24 * 30.43);
+          alertaBox.style.display = (diferenciaMesos >= 12) ? 'block' : 'none';
+        } else {
+          alertaBox.style.display = 'block';
+        }
+      }
+    };
+  }
 
-    function eliminarTirada(id) {
-      const transaccio = db.transaction(['tirades'], 'readwrite');
-      transaccio.objectStore('tirades').delete(id);
-      transaccio.oncomplete = () => carregarTirades();
-    }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
 
-    function exportarDades() {
-      alert("Generant còpia... El fitxer es guardarà a la teva carpeta triada de Safari.");
-      const dades = { export: "cartera-tirador", data: new Date() };
-      const blob = new Blob([JSON.stringify(dades)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "copia_cartera_tirador.json";
-      a.click();
-    }
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js');
-    }
-  </script>
-</body>
-</html>
