@@ -1,0 +1,21 @@
+cartera-tirador/
+├── index.html
+├── manifest.json
+├── service-worker.js
+├── README.md
+├── css/
+│   └── styles.css
+├── js/
+│   ├── app.js                 ← punt d'entrada (module)
+│   ├── db.js                  ← IndexedDB: documents, events, meta
+│   ├── files.js               ← carpeta configurable + desament de fitxers
+│   ├── notifications.js       ← permisos + recordatoris + .ics
+│   ├── calendar.js            ← lògica de la graella i esdeveniments
+│   ├── documents.js           ← llista, viewer, afegir documents
+│   ├── settings.js            ← pestanya Més (carpeta, backup, tema)
+│   ├── ui.js                  ← toast, tabs, helpers
+│   └── utils.js               ← helpers purs (dates, slug, escape)
+└── icons/
+    ├── icon-180.png
+    ├── icon-192.png
+    └── icon-512.png
