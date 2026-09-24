@@ -1,0 +1,328 @@
+import { put, STORE_EVENTS } from './db.js';
+
+let worker = null;
+
+/* =========================================================
+   TESSERACT — inicialització sota demanda
+   ========================================================= */
+async function ensureWorker(onProgress) {
+  if (worker) return worker;
+  if (!window.Tesseract) {
+    await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+  }
+  worker = await Tesseract.createWorker('cat+spa', 1, {
+    logger: m => {
+      if (onProgress && m.status === 'recognizing text') {
+        onProgress(Math.round(m.progress * 100));
+      }
+    }
+  });
+  await worker.setParameters({
+    preserve_interword_spaces: '1'
+  });
+  return worker;
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = res;
+    s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+export async function runOCR(fileOrDataUrl, onProgress) {
+  const w = await ensureWorker(onProgress);
+  const { data } = await w.recognize(fileOrDataUrl);
+  return data.text || '';
+}
+
+export async function terminateWorker() {
+  if (worker) {
+    try { await worker.terminate(); } catch {}
+    worker = null;
+  }
+}
+
+/* =========================================================
+   PARSER 1 — LLICÈNCIA F / FASES DE CAMPIONAT
+   ========================================================= */
+export function parseLicenseCalendar(rawText) {
+  const clean = rawText
+    .replace(/===== Page \d+ \[text layer\] =====/g, '')
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/[-_=]{3,}/g, '');
+
+  const lines = clean
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+
+  const monthNames = {
+    enero: 1, gener: 1,
+    febrero: 2, febrer: 2,
+    marzo: 3, març: 3,
+    abril: 4,
+    mayo: 5, maig: 5,
+    junio: 6, juny: 6,
+    julio: 7, juliol: 7,
+    agosto: 8, agost: 8,
+    septiembre: 9, setembre: 9,
+    octubre: 10,
+    noviembre: 11, novembre: 11,
+    diciembre: 12, desembre: 12
+  };
+
+  const years = (clean.match(/20\d{2}/g) || []).map(Number);
+  const defaultYear = years.length
+    ? [...years].sort((a, b) =>
+        years.filter(y => y === b).length - years.filter(y => y === a).length
+      )[0]
+    : new Date().getFullYear();
+
+  const datePatterns = [
+    /^(\d{1,2})\s+(?:de\s+)?([a-záéíóúñàèéíòóúç]+)\s+(?:de\s+)?(\d{4})/i,
+    /^(\d{1,2})\s+(?:de\s+)?([a-záéíóúñàèéíòóúç]+)\s*$/i,
+    /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/
+  ];
+
+  function parseDate(line) {
+    for (const pat of datePatterns) {
+      const m = line.match(pat);
+      if (!m) continue;
+      if (isNaN(parseInt(m[2], 10))) {
+        const day = parseInt(m[1], 10);
+        const monthName = m[2].toLowerCase();
+        const year = m[3] ? parseInt(m[3], 10) : defaultYear;
+        const norm = monthName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const month = monthNames[monthName] || monthNames[norm];
+        if (!month || day < 1 || day > 31) continue;
+        return { day, month, year, matchLen: m[0].length };
+      }
+      const day = parseInt(m[1], 10);
+      const month = parseInt(m[2], 10);
+      const year = parseInt(m[3], 10);
+      if (day < 1 || day > 31 || month < 1 || month > 12) continue;
+      return { day, month, year, matchLen: m[0].length };
+    }
+    return null;
+  }
+
+  const events = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const parsed = parseDate(line);
+    if (!parsed) continue;
+
+    let title = line.slice(parsed.matchLen).trim();
+    let consumed = 1;
+    if (title.length < 5 && i + 1 < lines.length) {
+      const next = lines[i + 1];
+      if (!parseDate(next) && next.length > 3) {
+        title = next;
+        consumed = 2;
+      }
+    }
+    if (title.length < 3) continue;
+
+    title = title.replace(/[:\-–—|]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const lower = title.toLowerCase();
+
+    let type = 'avis';
+    if (/solicitud\s+licencia|obtenci[oó]n\s+licencia|licencia\s+tipo\s+["']?f/i.test(lower)) {
+      type = 'llicencia-f';
+    } else if (/fase\s+campeonato|fase\s+campionat|final\s+campeonato/i.test(lower)) {
+      type = 'oficial';
+    } else if (/tirada\s+controlada|control\b|entrenament/i.test(lower)) {
+      type = 'controlada';
+    } else if (/categoria|ascens|promoci[oó]/i.test(lower)) {
+      type = 'categoria';
+    } else if (/oficial|copa|provincial|auton[oò]mic|campeonato/i.test(lower)) {
+      type = 'oficial';
+    }
+
+    let weapon = '';
+    if (/9\s*mm/i.test(title)) weapon = 'pistola-9mm';
+    else if (/fuego\s+central/i.test(title)) weapon = 'pistola-foc-central';
+    else if (/deportiva/i.test(title)) weapon = 'pistola-deportiva';
+    else if (/standard/i.test(title)) weapon = 'pistola-standard';
+    else if (/pistola/i.test(title)) weapon = 'pistola';
+    else if (/carabina|rifle/i.test(title)) weapon = 'carabina';
+    else if (/escopeta/i.test(title)) weapon = 'escopeta';
+
+    let notes = 'Importat per OCR';
+    if (type === 'llicencia-f') notes = 'Prova d\'obtenció de llicència F — 8:30h';
+    else if (type === 'oficial') notes = 'Fase de campionat — 15:00h';
+
+    events.push({
+      date: `${parsed.year}-${String(parsed.month).padStart(2, '0')}-${String(parsed.day).padStart(2, '0')}`,
+      title: title.slice(0, 100),
+      type,
+      weapon,
+      notes,
+      reminder: true,
+      reminderDaysBefore: type === 'oficial' ? 7 : 3,
+      notified: false,
+      createdAt: Date.now(),
+      source: 'ocr-license'
+    });
+
+    if (consumed === 2) i++;
+  }
+
+  const valid = events.filter(e => {
+    const y = new Date(e.date).getFullYear();
+    return y >= 2024 && y <= 2030;
+  });
+
+  const seen = new Set();
+  return valid.filter(e => {
+    const key = e.date + '|' + e.title.toLowerCase().slice(0, 25);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/* =========================================================
+   PARSER 2 — CALENDARI ANUAL DE GRAELLA
+   ========================================================= */
+export function parseGridCalendar(rawText, defaultYear) {
+  const lines = rawText
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+
+  let year = defaultYear || new Date().getFullYear();
+  const ym = rawText.match(/20\d{2}|2\.0\d{2}/);
+  if (ym) year = parseInt(ym[0].replace('.', ''), 10);
+
+  const monthShort = {
+    ene: 1, feb: 2, mar: 3, abr: 4, may: 5, jun: 6,
+    jul: 7, ago: 8, sep: 9, oct: 10, nov: 11, dic: 12
+  };
+
+  const dateRe = /^(\d{1,2})[-\/]([a-z]{3})$/i;
+  const dates = [];
+  let i = 0;
+  while (i < lines.length) {
+    const m = lines[i].match(dateRe);
+    if (!m) break;
+    const day = parseInt(m[1], 10);
+    const mon = monthShort[m[2].toLowerCase()];
+    if (!mon) break;
+    dates.push({
+      day, month: mon, year,
+      iso: `${year}-${String(mon).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    });
+    i++;
+  }
+
+  if (dates.length < 4) return [];
+
+  const codeRe = /^(S|CB|AL|HEXAGON)$/i;
+  const skipRe = /^(NAVIDAD|JUNIO|OCTUBRE|NOVIEMBRE|DICIEMBRE|SEPTIEMBRE|JULIO|MAYO|MARZO|ABRIL|ENERO|FEBRERO|Tour de Francia|Volta \d{4}|COPA PRESIDENTE|GALERIA|MODALIDAD|SOCIAL-|FASE CC|PCC-|Minirifle|METALES|P HISTORICO|MILITAR|25 m\.|50 m\.|10 m\.|25 m\. \(A\)|25 m\. \(B\)|2\.026|Actualizado|\d{2}\/\d{2}\/\d{4})$/i;
+
+  const modalitats = [];
+  let current = null;
+
+  for (; i < lines.length; i++) {
+    const line = lines[i];
+    if (skipRe.test(line)) continue;
+
+    if (codeRe.test(line)) {
+      if (current) current.codes.push(line.toUpperCase());
+      continue;
+    }
+
+    if (current && current.codes.length > 0) modalitats.push(current);
+    current = { name: line, codes: [] };
+  }
+  if (current && current.codes.length > 0) modalitats.push(current);
+
+  const events = [];
+  for (const mod of modalitats) {
+    const n = dates.length;
+    const c = mod.codes.length;
+    let mapping;
+
+    if (c === n) {
+      mapping = mod.codes.map((code, idx) => ({ code, date: dates[idx] }));
+    } else if (c < n) {
+      const step = (n - 1) / Math.max(c - 1, 1);
+      mapping = mod.codes.map((code, idx) => ({
+        code,
+        date: dates[Math.round(idx * step)]
+      }));
+    } else {
+      mapping = mod.codes.slice(0, n).map((code, idx) => ({ code, date: dates[idx] }));
+    }
+
+    for (const { code, date } of mapping) {
+      let type = 'avis';
+      if (code === 'CB') type = 'oficial';
+      else if (code === 'S') type = 'controlada';
+
+      let weapon = '';
+      const mName = mod.name.toLowerCase();
+      if (/^p\s|pistola|9\s*mm|fuego|deportiva|standard|libre/i.test(mName)) weapon = 'pistola';
+      else if (/^c\s|carabina|tendido|3\s*posiciones|ligera|br\d|gam/i.test(mName)) weapon = 'carabina';
+      else if (/aire|action|velocidad/i.test(mName)) weapon = 'aire';
+
+      events.push({
+        date: date.iso,
+        title: `${mod.name}${code !== 'S' ? ' (' + code + ')' : ''}`,
+        type,
+        weapon,
+        notes: `Calendari anual del club — codi ${code}`,
+        reminder: true,
+        reminderDaysBefore: 3,
+        notified: false,
+        createdAt: Date.now(),
+        source: 'ocr-grid'
+      });
+    }
+  }
+
+  const seen = new Set();
+  return events.filter(e => {
+    const key = e.date + '|' + e.title.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/* =========================================================
+   DETECCIÓ AUTOMÀTICA + GUARDAR
+   ========================================================= */
+export function parseAnyCalendar(rawText) {
+  if (/fase\s+campeonato|solicitud\s+licencia|obtenci[oó]n\s+licencia/i.test(rawText)) {
+    return { kind: 'license', events: parseLicenseCalendar(rawText) };
+  }
+
+  const firstLines = rawText.split(/\r?\n/).slice(0, 20).join('\n');
+  if (/^\s*\d{1,2}-[a-z]{3}/im.test(firstLines)) {
+    return { kind: 'grid', events: parseGridCalendar(rawText) };
+  }
+
+  const a = parseLicenseCalendar(rawText);
+  const b = parseGridCalendar(rawText);
+  return b.length > a.length
+    ? { kind: 'grid', events: b }
+    : { kind: 'license', events: a };
+}
+
+export async function saveParsedEvents(events) {
+  let ok = 0;
+  for (const ev of events) {
+    const full = {
+      ...ev,
+      id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)
+    };
+    if (await put(STORE_EVENTS, full)) ok++;
+  }
+  return ok;
+}
