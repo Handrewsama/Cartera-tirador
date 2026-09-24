@@ -43,12 +43,25 @@ export const TYPE_COLORS = {
   controlada: '#1e90ff',
   oficial: '#2ed573',
   categoria: '#9b5de5',
-  avis: '#f15bb5'
+  avis: '#f15bb5',
+  'llicencia-f': '#ff6a2b'
 };
 
 export const TYPE_LABELS = {
   controlada: 'Tirada controlada',
   oficial: 'Tirada oficial',
   categoria: 'Tirada per categoria',
-  avis: 'Avís / programada'
+  avis: 'Avís / programada',
+  'llicencia-f': 'Llicència F'
+};
+
+export const WEAPON_LABELS = {
+  'pistola-9mm': 'Pistola 9mm',
+  'pistola-foc-central': 'Pistola Foc Central',
+  'pistola-deportiva': 'Pistola Deportiva',
+  'pistola-standard': 'Pistola Standard',
+  pistola: 'Pistola',
+  carabina: 'Carabina',
+  escopeta: 'Escopeta',
+  aire: 'Aire comprimit'
 };
