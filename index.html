@@ -2,190 +2,184 @@
 <html lang="ca">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cartera del Tirador</title>
   <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#10141a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
     :root {
       --bg-color: #10141a;
-      --card-bg: #1a222d;
-      --text-color: #ffffff;
-      --text-dim: #8a99ad;
-      --accent: #ff9f43;
-      --accent-green: #2ecc71;
-      --accent-red: #ff4d4d;
-      --border-color: #2c3a4e;
+      --card-bg: #1a202c;
+      --text-color: #f7fafc;
+      --accent-color: #3182ce;
+      --danger-color: #e53e3e;
+      --warning-color: #dd6b20;
+      --success-color: #38a169;
+    }
+    body.light-mode {
+      --bg-color: #f7fafc;
+      --card-bg: #ffffff;
+      --text-color: #1a202c;
+      --accent-color: #2b6cb0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+      padding-bottom: 80px;
+    }
+    header {
+      background-color: var(--card-bg);
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #2d3748;
+    }
+    h1 { margin: 0; font-size: 1.3rem; }
+    .contenidor { padding: 15px; }
+    .pestanya-contingut { display: none; }
+    .pestanya-contingut.activa { display: block; }
+    
+    .alerta-caducitat {
+      background-color: rgba(229, 62, 62, 0.2);
+      border: 1px solid var(--danger-color);
+      color: #fc8181;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-weight: bold;
+      display: none;
+    }
+    body.light-mode .alerta-caducitat {
+      background-color: #fff5f5;
+      color: var(--danger-color);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 70px; unselectable: none; }
+    .camp { margin-bottom: 12px; }
+    label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
+    input, select, button {
+      width: 100%; padding: 12px; border-radius: 6px; box-sizing: border-box;
+      border: 1px solid #4a5568; background-color: var(--card-bg); color: var(--text-color);
+      font-size: 1rem;
+    }
+    button {
+      background-color: var(--accent-color); color: white; border: none;
+      font-weight: bold; cursor: pointer; margin-top: 5px;
+    }
     
-    header { background-color: var(--card-bg); padding: 20px 15px; border-bottom: 1px solid var(--border-color); text-align: center; }
-    header h1 { font-size: 1.4rem; letter-spacing: 0.5px; }
-
-    .nav-tabs { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--card-bg); border-top: 1px solid var(--border-color); z-index: 100; }
-    .tab-btn { flex: 1; text-align: center; padding: 15px 0; background: none; border: none; color: var(--text-dim); font-size: 1rem; font-weight: bold; cursor: pointer; }
-    .tab-btn.active { color: var(--accent); border-top: 2px solid var(--accent); }
-
-    .content-page { display: none; padding: 15px; }
-    .content-page.active { display: block; }
-
-    .camp { margin-bottom: 15px; }
-    .camp label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-dim); }
-    .camp input, .camp select { width: 100%; padding: 12px; background-color: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-size: 1rem; }
+    .llista-tirades, .llista-documents { list-style: none; padding: 0; margin: 15px 0; }
+    .item-tirada {
+      background-color: var(--card-bg); padding: 12px; border-radius: 8px;
+      margin-bottom: 10px; border-left: 4px solid var(--accent-color);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .item-tirada.oficial { border-left-color: var(--success-color); }
+    .item-tirada.controlada { border-left-color: var(--accent-color); }
+    .item-tirada.categoria { border-left-color: #805ad5; }
+    .item-tirada.avis-futur { border-left-color: var(--warning-color); }
     
-    button.boto-desar { width: 100%; padding: 14px; background-color: var(--accent); border: none; color: #000; font-weight: bold; border-radius: 8px; font-size: 1rem; margin-top: 10px; }
-    
-    .alerta-caixa { background-color: rgba(255, 77, 77, 0.15); border: 1px solid var(--accent-red); padding: 12px; border-radius: 8px; margin-bottom: 20px; color: var(--accent-red); font-size: 0.95rem; display: none; }
+    .boto-eliminar {
+      background-color: var(--danger-color); width: auto; padding: 6px 12px; font-size: 0.8rem; margin: 0;
+    }
 
-    .llista-tirades { list-style: none; margin-top: 10px; margin-bottom: 25px; }
-    .tirada-item { background-color: var(--card-bg); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-    .tirada-info h4 { font-size: 1rem; margin-bottom: 3px; }
-    .tirada-info p { font-size: 0.85rem; color: var(--text-dim); }
-    
-    .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-    .badge.oficial { background-color: rgba(255, 159, 67, 0.2); color: var(--accent); }
-    .badge.controlada { background-color: rgba(46, 204, 113, 0.2); color: var(--accent-green); }
-    .badge.categoria { background-color: rgba(52, 152, 219, 0.2); color: #3498db; }
-    .badge.futur { background-color: rgba(241, 196, 15, 0.2); color: #f1c40f; }
-
-    .boto-eliminar { background: none; border: none; color: var(--accent-red); font-size: 0.9rem; cursor: pointer; padding: 5px; }
-    
-    /* Estils bàsics per a Documents */
-    .doc-caixa { background-color: var(--card-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 12px; }
-    .doc-caixa h3 { margin-bottom: 5px; font-size: 1.1rem; }
-    .img-preview { max-width: 100%; margin-top: 10px; border-radius: 6px; display: block; }
+    nav.barra-inferior {
+      position: fixed; bottom: 0; left: 0; width: 100%; height: 65px;
+      background-color: var(--card-bg); border-top: 1px solid #2d3748;
+      display: flex; justify-content: space-around; align-items: center;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    }
+    .boto-nav {
+      background: none; border: none; color: var(--text-color); opacity: 0.6;
+      font-size: 0.95rem; text-align: center; width: 50%; height: 100%; margin: 0; padding: 0;
+    }
+    .boto-nav.actiu { opacity: 1; font-weight: bold; border-top: 4px solid var(--accent-color); }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>Polígon — Cartera del Tirador</h1>
+    <h1 id="titol-header">Cartera del Tirador</h1>
   </header>
 
-  <!-- PESTANYA 1: DOCUMENTS -->
-  <main id="pag-documents" class="content-page active">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+  <div class="contenidor">
+    <div id="alerta-obligatoria" class="alerta-caducitat">
+      ⚠️ ATENCIÓ: No s'ha detectat cap Tirada Oficial o Controlada en els últims 12 mesos. Risc de pèrdua de llicència o categoria!
+    </div>
+
+    <!-- PESTANYA 1: DOCUMENTS -->
+    <main id="pestanya-documents" class="pestanya-contingut activa">
       <h2>Els teus Documents</h2>
-      <button onclick="obrirFormulariDoc()" style="padding: 8px 12px; background: var(--accent); border:none; border-radius:6px; font-weight:bold; color:#000;">+ Afegir</button>
-    </div>
+      <form id="formulari-document">
+        <div class="camp">
+          <label>Categoria del document:</label>
+          <select id="categoria-doc">
+            <option value="Llicència federativa">Llicència federativa</option>
+            <option value="Targeta de soci">Targeta de soci</option>
+            <option value="Guia d'arma">Guia d'arma</option>
+            <option value="Altres">Altres</option>
+          </select>
+        </div>
+        <div class="camp">
+          <label>Títol / Nom:</label>
+          <input type="text" id="titol-doc" placeholder="Ex: Llicència F, Guia Glock..." required>
+        </div>
+        <button type="submit">Desar document</button>
+      </form>
+      <ul id="llista-docs" class="llista-documents"></ul>
+    </main>
 
-    <!-- Formulari ocult per defecte -->
-    <div id="form-document-caixa" style="display:none; background: var(--card-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:20px;">
-      <h3 style="margin-bottom:15px;">Afegir document</h3>
+    <!-- PESTANYA 2: CALENDARI I CONFIGURACIÓ -->
+    <main id="pestanya-mes" class="pestanya-contingut">
+      <h2>Calendari i Tirades</h2>
+      <form id="formulari-tirada">
+        <div class="camp">
+          <label>Tipus de Tirada:</label>
+          <select id="tipus-tirada" required>
+            <option value="controlada">Tirada Controlada (Manteniment)</option>
+            <option value="oficial">Tirada Oficial</option>
+            <option value="categoria">Tirada per Pujar de Categoria</option>
+            <option value="avis-futur">Avís / Tirada Programada (Futur)</option>
+          </select>
+        </div>
+        <div class="camp">
+          <label>Data de l'esdeveniment:</label>
+          <input type="date" id="data-tirada" required>
+        </div>
+        <div class="camp">
+          <label>Competició o Club de Tir:</label>
+          <input type="text" id="nom-tirada" placeholder="Ex: Tirada de Club, Campionat..." required>
+        </div>
+        <button type="submit">Registrar al Calendari</button>
+      </form>
+
+      <h3>Pròxims Avisos i Planificacions</h3>
+      <ul id="llista-avisos" class="llista-tirades"></ul>
+
+      <h3>Historial de Tirades Realitzades</h3>
+      <ul id="llista-historial" class="llista-tirades"></ul>
+
+      <hr style="border-color:#2d3748; margin: 25px 0;">
+      <h3>Opcions de l'App</h3>
       <div class="camp">
-        <label>Categoria</label>
-        <select id="doc-categoria">
-          <option value="Llicència federativa">Llicència federativa</option>
-          <option value="Targeta de soci">Targeta de soci</option>
-          <option value="Guia d'arma">Guia d'arma</option>
-          <option value="Altres">Altres</option>
-        </select>
+        <button type="button" onclick="canviarAparença()" style="background-color:#4a5568;">Canviar Aparença (Fosc/Clar)</button>
       </div>
-      <div class="camp">
-        <label>Títol</label>
-        <input type="text" id="doc-titol" placeholder="Ex: Llicència F, Guia Glock 17...">
-      </div>
-      <div class="camp">
-        <label>Imatge</label>
-        <input type="file" id="doc-fitxer" accept="image/*" style="border:none; padding:0;">
-      </div>
-      <div style="display:flex; gap:10px;">
-        <button onclick="desarDocument()" class="boto-desar" style="margin:0; flex:1;">Desar</button>
-        <button onclick="tancarFormulariDoc()" class="boto-desar" style="margin:0; flex:1; background:#34495e; color:#fff;">Cancel·la</button>
-      </div>
-    </div>
+    </main>
+  </div>
 
-    <div id="llista-documents-contenidor">
-      <!-- Documents dinàmics -->
-    </div>
-  </main>
-
-  <!-- PESTANYA 2: MÉS (CONFIGURACIÓ, CALENDARI I AVISOS) -->
-  <main id="pag-mes" class="content-page">
-    
-    <!-- Caixa d'alertes crítiques de caducitat -->
-    <div id="alerta-tirades-critica" class="alerta-caixa">
-      ⚠️ <strong>Atenció llicència:</strong> No has registrat cap tirada oficial o de control en els últims 12 mesos o tens un avís pendent aviat. Fes una tirada per evitar perdre la teva llicència o categoria!
-    </div>
-
-    <h2>Control de Tirades i Calendari</h2>
-    <p style="color: var(--text-dim); font-size:0.9rem; margin-bottom:20px;">Gestiona les teves tirades obligatòries per mantenir vigents les teves llicències i programa avisos futurs.</p>
-
-    <!-- Formulari de Tirades -->
-    <form id="formulari-tirada" style="background-color: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 25px;">
-      <h3 style="margin-bottom: 12px; font-size:1.1rem; color: var(--accent);">Registrar Nova Tirada / Avís</h3>
-      
-      <div class="camp">
-        <label>Tipus de Tirada / Activitat:</label>
-        <select id="tipus-tirada" required>
-          <option value="oficial">Tirada Oficial</option>
-          <option value="controlada">Tirada Controlada (Manteniment)</option>
-          <option value="categoria">Tirada per Pujar de Categoria</option>
-          <option value="avis-futur">Avís / Tirada Programada (Futur)</option>
-        </select>
-      </div>
-
-      <div class="camp">
-        <label>Data de l'esdeveniment:</label>
-        <input type="date" id="data-tirada" required>
-      </div>
-
-      <div class="camp">
-        <label>Nom de la Competició / Club / Detall:</label>
-        <input type="text" id="nom-competicio" placeholder="Ex: Campionat del Club, Control Obligatori..." required>
-      </div>
-
-      <button type="submit" class="boto-desar">Registrar al Calendari</button>
-    </form>
-
-    <!-- Llistat d'Avisos Futurs -->
-    <h3>🗓️ Pròxims Avisos i Tirades Planificades</h3>
-    <ul id="llista-avisos-futurs" class="llista-tirades">
-      <!-- Dinàmic -->
-    </ul>
-
-    <!-- Historial de Tirades Realitzades -->
-    <h3>📊 Historial de Tirades Realitzades</h3>
-    <ul id="llista-historial-tirades" class="llista-tirades">
-      <!-- Dinàmic -->
-    </ul>
-
-    <!-- Secció de dades (Exportar/Importar existents) -->
-    <div style="margin-top:30px; border-top: 1px solid var(--border-color); padding-top:20px;">
-      <h3>Gestió de dades locals</h3>
-      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:12px;">Les teves dades es guarden de forma 100% privada al teu dispositiu.</p>
-      <button onclick="esborrarTot()" style="width:100%; padding:10px; background:var(--accent-red); border:none; border-radius:6px; color:#fff; font-weight:bold;">Esborrar tots els documents i tirades</button>
-    </div>
-  </main>
-
-  <!-- NAVEGACIÓ INFERIOR -->
-  <nav class="nav-tabs">
-    <button class="tab-btn active" onclick="canviarTab('pag-documents', this)">Documents</button>
-    <button class="tab-btn" onclick="canviarTab('pag-mes', this)">Més / Tirades</button>
+  <nav class="barra-inferior">
+    <button class="boto-nav actiu" onclick="canviarPestanya('documents', this)">Documents</button>
+    <button class="boto-nav" onclick="canviarPestanya('mes', this)">Més / Calendari</button>
   </nav>
 
   <script>
-    // --- LÒGICA NAVEGACIÓ ---
-    function canviarTab(pageId, btn) {
-      document.querySelectorAll('.content-page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(pageId).add('active');
-      document.getElementById(pageId).classList.add('active');
-      btn.classList.add('active');
-    }
-
-    function obrirFormulariDoc() { document.getElementById('form-document-caixa').style.display = 'block'; }
-    function tancarFormulariDoc() { document.getElementById('form-document-caixa').style.display = 'none'; }
-
-    // --- LÒGICA INDEXEDDB BASE DE DADES PRIVADA ---
     let db;
-    const request = indexedDB.open('CarteraTiradorDB', 2); // Versió 2 amb suport per a tirades
+    const request = indexedDB.open('cartera-tirador-db', 2);
 
     request.onupgradeneeded = event => {
-      const db = event.target.result;
+      db = event.target.result;
       if (!db.objectStoreNames.contains('documents')) {
         db.createObjectStore('documents', { keyPath: 'id', autoIncrement: true });
       }
@@ -196,170 +190,77 @@
 
     request.onsuccess = event => {
       db = event.target.result;
-      actualitzarInterficieDocs();
-      actualitzarInterficieTirades();
+      carregarDocuments();
+      carregarTirades();
     };
 
-    // --- ACCIONS DOCUMENTS ---
-    function desarDocument() {
-      const categoria = document.getElementById('doc-categoria').value;
-      const titol = document.getElementById('doc-titol').value || categoria;
-      const fitxerInput = document.getElementById('doc-fitxer');
-      
-      if (!fitxerInput.files[0]) {
-        alert("Si us plau, selecciona una imatge o fes una foto.");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const transaction = db.transaction(['documents'], 'readwrite');
-        const store = transaction.objectStore('documents');
-        store.add({ categoria, titol, imatge: e.target.result, data: new Date().toLocaleDateString() });
-        
-        transaction.oncomplete = () => {
-          tancarFormulariDoc();
-          document.getElementById('doc-titol').value = '';
-          document.getElementById('doc-fitxer').value = '';
-          actualitzarInterficieDocs();
-        };
-      };
-      reader.readAsDataURL(fitxerInput.files[0]);
+    function canviarPestanya(pestanya, boto) {
+      document.querySelectorAll('.pestanya-contingut').forEach(p => p.classList.remove('activa'));
+      document.querySelectorAll('.boto-nav').forEach(b => b.classList.remove('actiu'));
+      document.getElementById('pestanya-' + pestanya).classList.add('activa');
+      boto.classList.add('actiu');
     }
 
-    function actualitzarInterficieDocs() {
-      const contenidor = document.getElementById('llista-documents-contenidor');
-      contenidor.innerHTML = '';
-      
-      const transaction = db.transaction(['documents'], 'readonly');
-      const store = transaction.objectStore('documents');
-      
-      store.openCursor().onsuccess = event => {
-        const cursor = event.target.result;
-        if (cursor) {
-          const doc = cursor.value;
-          const div = document.createElement('div');
-          div.className = 'doc-caixa';
-          div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-              <div>
-                <h3>${doc.titol}</h3>
-                <span class="badge oficial" style="background:rgba(255,255,255,0.1); color:#fff;">${doc.categoria}</span>
-              </div>
-              <button onclick="eliminarDoc(${doc.id})" class="boto-eliminar">Eliminar</button>
-            </div>
-            <img src="${doc.imatge}" class="img-preview" alt="Document">
-          `;
-          contenidor.appendChild(div);
-          cursor.continue();
-        }
-      };
+    function canviarAparença() {
+      document.body.classList.toggle('light-mode');
     }
 
-    function eliminarDoc(id) {
-      if(confirm("Segur que vols eliminar aquest document?")) {
-        const transaction = db.transaction(['documents'], 'readwrite');
-        transaction.objectStore('documents').delete(id);
-        transaction.oncomplete = () => actualitzarInterficieDocs();
-      }
-    }
-
-    // --- ACCIONS CALENDARI I TIRADES ---
-    document.getElementById('formulari-tirada').addEventListener('submit', event => {
-      event.preventDefault();
-      
+    document.getElementById('formulari-tirada').addEventListener('submit', e => {
+      e.preventDefault();
       const tipus = document.getElementById('tipus-tirada').value;
       const data = document.getElementById('data-tirada').value;
-      const nom = document.getElementById('nom-competicio').value;
-      
-      const novaTirada = { tipus, data, nom };
-      
-      const transaction = db.transaction(['tirades'], 'readwrite');
-      transaction.objectStore('tirades').add(novaTirada);
-      
-      transaction.oncomplete = () => {
+      const nom = document.getElementById('nom-tirada').value;
+
+      const transaccio = db.transaction(['tirades'], 'readwrite');
+      const magatzem = transaccio.objectStore('tirades');
+      magatzem.add({ tipus, data, nom });
+
+      transaccio.oncomplete = () => {
         document.getElementById('formulari-tirada').reset();
-        actualitzarInterficieTirades();
+        carregarTirades();
       };
     });
 
-    function actualitzarInterficieTirades() {
-      const llistaAvisos = document.getElementById('llista-avisos-futurs');
-      const llistaHistorial = document.getElementById('llista-historial-tirades');
-      const caixaAlerta = document.getElementById('alerta-tirades-critica');
-      
-      llistaAvisos.innerHTML = '';
-      llistaHistorial.innerHTML = '';
-      
-      let hiHaTiradaRecent = false;
-      let dataAvui = new Date();
-      let faUnAny = new Date().setFullYear(dataAvui.getFullYear() - 1);
+    function carregarTirades() {
+      const historialUl = document.getElementById('llista-historial');
+      const avisosUl = document.getElementById('llista-avisos');
+      historialUl.innerHTML = '';
+      avisosUl.innerHTML = '';
 
-      const transaction = db.transaction(['tirades'], 'readonly');
-      const store = transaction.objectStore('tirades');
-      
-      store.openCursor().onsuccess = event => {
+      let ultimaTiradaFeta = null;
+      const avui = new Date();
+
+      const transaccio = db.transaction(['tirades'], 'readonly');
+      const magatzem = transaccio.objectStore('tirades');
+
+      magatzem.openCursor().onsuccess = event => {
         const cursor = event.target.result;
         if (cursor) {
-          const t = cursor.value;
-          const dataTirada = new Date(t.data);
-          
+          const tirada = cursor.value;
+          const dataTirada = new Date(tirada.data);
+
           const li = document.createElement('li');
-          li.className = 'tirada-item';
+          li.className = `item-tirada ${tirada.tipus}`;
           li.innerHTML = `
-            <div class="tirada-info">
-              <h4>${t.nom}</h4>
-              <p>📅 Data: ${dataTirada.toLocaleDateString('ca-ES')}</p>
+            <div>
+              <strong>${tirada.nom}</strong><br>
+              <small>${tirada.data} - ${tirada.tipus.toUpperCase()}</small>
             </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span class="badge ${t.tipus === 'avis-futur' ? 'futur' : t.tipus}">${t.tipus.replace('-', ' ')}</span>
-              <button onclick="eliminarTirada(${t.id})" class="boto-eliminar">🗑️</button>
-            </div>
+            <button class="boto-eliminar" onclick="eliminarTirada(${tirada.id})">X</button>
           `;
 
-          if (t.tipus === 'avis-futur' || dataTirada > dataAvui) {
-            llistaAvisos.appendChild(li);
-          } else {
-            llistaHistorial.appendChild(li);
-            if (dataTirada >= faUnAny && (t.tipus === 'oficial' || t.tipus === 'controlada')) {
-              hiHaTiradaRecent = true;
+          if (dataTirada < avui && tirada.tipus !== 'avis-futur') {
+            historialUl.appendChild(li);
+            if (tirada.tipus === 'controlada' || tirada.tipus === 'oficial') {
+              if (!ultimaTiradaFeta || dataTirada > new Date(ultimaTiradaFeta.data)) {
+                ultimaTiradaFeta = tirada;
+              }
             }
+          } else {
+            avisosUl.appendChild(li);
           }
           cursor.continue();
         } else {
-          // Mostrar o amagar alerta crítica si no hi ha cap activitat obligatòria registrada en els darrers 12 mesos
-          if (!hiHaTiradaRecent) {
-            caixaAlerta.style.display = 'block';
-          } else {
-            caixaAlerta.style.display = 'none';
-          }
-        }
-      };
-    }
-
-    function eliminarTirada(id) {
-      if(confirm("Vols eliminar aquesta tirada del teu registre?")) {
-        const transaction = db.transaction(['tirades'], 'readwrite');
-        transaction.objectStore('tirades').delete(id);
-        transaction.oncomplete = () => actualitzarInterficieTirades();
-      }
-    }
-
-    function esborrarTot() {
-      if(confirm("ATENCIÓ: Això esborrarà completament totes les dades del teu telèfon de manera permanent. Estàs segur?")) {
-        const t1 = db.transaction(['documents'], 'readwrite');
-        t1.objectStore('documents').clear();
-        const t2 = db.transaction(['tirades'], 'readwrite');
-        t2.objectStore('tirades').clear();
-        alert("Dades esborrades.");
-        window.location.reload();
-      }
-    }
-
-    // Registrar el Service Worker per funcionar sense Internet (PWA)
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-    }
-  </script>
-</body>
-</html>
+          const alertaBox = document.getElementById('alerta-obligatoria');
+          if (ultimaTiradaFeta) {
+            const dataUltima = new Date(ultimaTiradaFeta.data);
