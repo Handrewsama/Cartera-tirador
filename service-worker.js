@@ -13,6 +13,7 @@ const APP_SHELL = [
   './js/documents.js',
   './js/settings.js',
   './js/utils.js',
+  './js/ocr.js',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -50,7 +51,6 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Notificacions push (per si més endavant n'afegeixes)
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
