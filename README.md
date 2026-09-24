@@ -1,15 +1,44 @@
-# Cartera del Tirador — PWA
+# Cartera del Tirador — PWA modular
 
-## Publicarla con GitHub Pages
+## Estructura
 
-1. Crea un repositorio en GitHub.
-2. Sube **todo el contenido de esta carpeta**, manteniendo la carpeta `icons`.
-3. En GitHub: **Settings → Pages**.
-4. En **Build and deployment**, selecciona **Deploy from a branch**.
-5. Selecciona la rama que contiene estos archivos y la carpeta `/ (root)`.
-6. Abre la URL que te indique GitHub Pages desde Safari en el iPhone.
-7. En Safari: **Compartir → Añadir a pantalla de inicio**.
+```
+cartera-tirador/
+├── index.html
+├── manifest.json
+├── service-worker.js
+├── css/styles.css
+├── js/
+│   ├── app.js
+│   ├── ui.js
+│   ├── db.js
+│   ├── files.js
+│   ├── notifications.js
+│   ├── calendar.js
+│   ├── documents.js
+│   ├── settings.js
+│   └── utils.js
+└── icons/icon-180.png, icon-192.png, icon-512.png
+```
 
-La aplicación funciona como PWA y conserva los documentos en el almacenamiento local del navegador mediante IndexedDB. La copia de seguridad JSON de la propia aplicación sigue disponible y es recomendable utilizarla periódicamente.
+## Publicar a GitHub Pages
 
-Importante: no subas documentos personales al repositorio. Los documentos que guardes dentro de la aplicación permanecen en el almacenamiento local del iPhone; el repositorio solo contiene el código de la aplicación.
+1. Puja **tota la carpeta** mantenint l'estructura.
+2. **Settings → Pages → Deploy from a branch → / (root)**.
+3. Obre la URL al Safari de l'iPhone.
+4. **Compartir → Afegir a pantalla d'inici**.
+
+## Funcionalitats
+
+- **Documents**: llicències, guies d'arma, etc. amb suport multi-imatge.
+- **Calendari**: tirades controlades/oficials/categoria i avisos futurs.
+- **Recordatoris**: notificacions natives + export .ics per al calendari del telèfon.
+- **Carpeta configurable** (Chrome/Edge/Safari 16.4+): tria on es desen les imatges.
+- **Backup JSON**: exporta/importa tots els documents i esdeveniments.
+- **Alerta de caducitat**: 12 mesos sense tirada → avís vermell.
+
+## Notes
+
+- L'IndexedDB està a la versió 3 (stores: `documents`, `events`, `meta`).
+- El Service Worker usa `cartera-tirador-v3`. Si ja tenies instal·lada la v1, es netejarà automàticament.
+- Les notificacions requereixen que la PWA estigui instal·lada a la pantalla d'inici (iOS 16.4+).
