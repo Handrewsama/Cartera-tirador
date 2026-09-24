@@ -1,12 +1,18 @@
 import { getAll, put, del, STORE_EVENTS } from './db.js';
 import { toast } from './ui.js';
-import { escapeHtml, ymd, TYPE_COLORS, TYPE_LABELS } from './utils.js';
-import { checkDueReminders, downloadEventICS, showNotification } from './notifications.js';
+import { escapeHtml, ymd, TYPE_COLORS, TYPE_LABELS, WEAPON_LABELS } from './utils.js';
+import { checkDueReminders, downloadEventICS } from './notifications.js';
+import { runOCR, parseAnyCalendar, saveParsedEvents } from './ocr.js';
 
 let eventsCache = [];
 let currentMonth = new Date();
 let editingId = null;
+let filterType = 'Tots';
+let filterWeapon = 'Totes';
 
+/* =========================================================
+   INICIALITZACIo
+   ========================================================= */
 export async function initCalendar() {
   document.getElementById('prevMonth').addEventListener('click', () => {
     currentMonth.setMonth(currentMonth.getMonth() - 1);
@@ -32,6 +38,33 @@ export async function initCalendar() {
     if (ev) downloadEventICS(ev);
   });
 
+  /* ---------- OCR + Enganxar text ---------- */
+  document.getElementById('ocrBtn').addEventListener('click', () => {
+    document.getElementById('ocrFile').click();
+  });
+  document.getElementById('ocrFile').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (file) await processOCRFile(file);
+  });
+
+  document.getElementById('pasteBtn').addEventListener('click', () => {
+    document.getElementById('pasteText').value = '';
+    document.getElementById('pasteOverlay').classList.add('show');
+  });
+  document.getElementById('pasteCancelBtn').addEventListener('click', () => {
+    document.getElementById('pasteOverlay').classList.remove('show');
+  });
+  document.getElementById('pasteAnalyzeBtn').addEventListener('click', () => {
+    const text = document.getElementById('pasteText').value;
+    if (text.length < 20) { toast('Enganxa primer el text'); return; }
+    document.getElementById('pasteOverlay').classList.remove('show');
+    const result = parseAnyCalendar(text);
+    if (!result.events.length) { toast('No s\'ha detectat cap data'); return; }
+    showOCRPreview(result.events, result.kind);
+  });
+
+  renderCalFilters();
   await reload();
 }
 
@@ -43,6 +76,53 @@ export async function reload() {
   checkLicenseAlert();
 }
 
+/* =========================================================
+   FILTRES
+   ========================================================= */
+function renderCalFilters() {
+  const wrap = document.getElementById('calFilters');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  const types = ['Tots', 'controlada', 'oficial', 'categoria', 'llicencia-f', 'avis'];
+  const row1 = document.createElement('div');
+  row1.className = 'chips';
+  row1.style.paddingBottom = '8px';
+  types.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (t === filterType ? ' active' : '');
+    b.textContent = t === 'Tots' ? 'Tots els tipus' : (TYPE_LABELS[t] || t);
+    b.onclick = () => { filterType = t; renderCalFilters(); renderCalendar(); renderLists(); };
+    row1.appendChild(b);
+  });
+
+  const weapons = ['Totes', 'pistola', 'carabina', 'escopeta', 'aire'];
+  const row2 = document.createElement('div');
+  row2.className = 'chips';
+  weapons.forEach(w => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (w === filterWeapon ? ' active' : '');
+    b.textContent = w === 'Totes' ? 'Totes les armes' : (WEAPON_LABELS[w] || w);
+    b.onclick = () => { filterWeapon = w; renderCalFilters(); renderCalendar(); renderLists(); };
+    row2.appendChild(b);
+  });
+
+  wrap.appendChild(row1);
+  wrap.appendChild(row2);
+}
+
+function filterEvent(e) {
+  if (filterType !== 'Tots' && e.type !== filterType) return false;
+  if (filterWeapon !== 'Totes') {
+    const w = (e.weapon || '').toLowerCase();
+    if (!w.startsWith(filterWeapon)) return false;
+  }
+  return true;
+}
+
+/* =========================================================
+   CALENDARI MENSUAL
+   ========================================================= */
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   const label = document.getElementById('monthLabel');
@@ -61,11 +141,13 @@ function renderCalendar() {
   });
   for (let i = 0; i < startWeekday; i++) html += '<div></div>';
 
+  const visible = eventsCache.filter(filterEvent);
+
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const dayEvents = eventsCache.filter(e => e.date === dateStr);
+    const dayEvents = visible.filter(e => e.date === dateStr);
     const dots = dayEvents.slice(0, 3).map(e =>
-      `<span class="cal-dot" style="background:${TYPE_COLORS[e.type]}"></span>`
+      `<span class="cal-dot" style="background:${TYPE_COLORS[e.type] || '#888'}"></span>`
     ).join('');
     const cls = 'cal-day' + (dateStr === todayStr ? ' today' : '');
     html += `<div data-date="${dateStr}" class="${cls}">
@@ -78,24 +160,31 @@ function renderCalendar() {
     el.addEventListener('click', () => openSheet(null, el.dataset.date)));
 }
 
+/* =========================================================
+   LLISTES
+   ========================================================= */
 function renderLists() {
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const upcoming = eventsCache
+  const visible = eventsCache.filter(filterEvent);
+
+  const upcoming = visible
     .filter(e => new Date(e.date) >= today)
     .sort((a, b) => a.date.localeCompare(b.date));
-  const history = eventsCache
+  const history = visible
     .filter(e => new Date(e.date) < today)
     .sort((a, b) => b.date.localeCompare(a.date));
 
   const render = list => list.length === 0
     ? '<div class="empty-state" style="padding:20px;"><p>Cap esdeveniment.</p></div>'
     : list.map(e => `
-      <div class="item-tirada" data-id="${e.id}" style="border-left:3px solid ${TYPE_COLORS[e.type]}">
+      <div class="item-tirada" data-id="${e.id}" style="border-left:3px solid ${TYPE_COLORS[e.type] || '#888'}">
         <div class="tirada-detalls">
           <strong>${escapeHtml(e.title)}</strong>
           ${e.reminder ? '<span style="font-size:11px;color:var(--accent);margin-left:6px;">🔔</span>' : ''}
           <br>
-          <small style="color:var(--text-dim);">${TYPE_LABELS[e.type]} · ${e.date}</small>
+          <small style="color:var(--text-dim);">
+            ${TYPE_LABELS[e.type] || e.type}${e.weapon ? ' · ' + (WEAPON_LABELS[e.weapon] || e.weapon) : ''} · ${e.date}
+          </small>
         </div>
         <button class="boto-del" data-del="${e.id}">✕</button>
       </div>
@@ -118,6 +207,9 @@ function renderLists() {
     }));
 }
 
+/* =========================================================
+   SHEET D'ESDEVENIMENT
+   ========================================================= */
 function openSheet(ev, presetDate) {
   editingId = ev ? ev.id : null;
   document.getElementById('eventSheetTitle').textContent = ev ? 'Editar esdeveniment' : 'Afegir esdeveniment';
@@ -150,6 +242,7 @@ async function saveEvent() {
     reminder: document.getElementById('evReminder').checked,
     reminderDaysBefore: parseInt(document.getElementById('evReminderDays').value, 10) || 3,
     notified: prev ? prev.notified : false,
+    weapon: prev ? (prev.weapon || '') : '',
     createdAt: prev ? prev.createdAt : Date.now()
   };
   await put(STORE_EVENTS, ev);
@@ -167,7 +260,9 @@ async function deleteCurrent() {
   await reload();
 }
 
-/* Alerta de caducitat de llicència (12 mesos sense tirada oficial/controlada/categoria) */
+/* =========================================================
+   ALERTA DE CADUCITAT
+   ========================================================= */
 function checkLicenseAlert() {
   const today = new Date();
   const oficials = eventsCache
@@ -180,4 +275,89 @@ function checkLicenseAlert() {
   if (!ultima) { box.style.display = 'block'; return; }
   const mesos = (today - new Date(ultima.date)) / (1000 * 60 * 60 * 24 * 30.43);
   box.style.display = mesos >= 12 ? 'block' : 'none';
+}
+
+/* =========================================================
+   OCR
+   ========================================================= */
+async function processOCRFile(file) {
+  const overlay = document.getElementById('ocrOverlay');
+  const progress = document.getElementById('ocrProgress');
+  const status = document.getElementById('ocrStatus');
+  overlay.classList.add('show');
+  status.textContent = 'Carregant motor OCR…';
+  progress.textContent = '';
+
+  try {
+    const text = await runOCR(file, pct => {
+      status.textContent = 'Llegint text…';
+      progress.textContent = pct + '%';
+    });
+
+    status.textContent = 'Analitzant dates…';
+    const result = parseAnyCalendar(text);
+
+    overlay.classList.remove('show');
+
+    if (!result.events.length) {
+      toast('No s\'ha detectat cap data al document');
+      return;
+    }
+
+    showOCRPreview(result.events, result.kind);
+  } catch (err) {
+    console.error(err);
+    overlay.classList.remove('show');
+    toast('Error llegint la imatge');
+  }
+}
+
+function showOCRPreview(events, kind) {
+  const overlay = document.getElementById('ocrPreviewOverlay');
+  const list = document.getElementById('ocrPreviewList');
+  const info = document.getElementById('ocrPreviewInfo');
+
+  const kindLabel = kind === 'grid'
+    ? 'Calendari anual de club'
+    : kind === 'license'
+    ? 'Calendari de llicència F / campionat'
+    : 'Calendari';
+
+  info.textContent = `${kindLabel} · ${events.length} esdeveniments detectats. Revisa i desmarca el que no vulguis.`;
+
+  list.innerHTML = events.map((ev, i) => `
+    <label style="display:flex; gap:10px; align-items:flex-start;
+      padding:10px; border-bottom:1px solid var(--border); cursor:pointer;">
+      <input type="checkbox" checked data-idx="${i}" style="margin-top:4px; width:auto;">
+      <div style="flex:1;">
+        <div style="font-weight:600; font-size:13px;">${escapeHtml(ev.title)}</div>
+        <div style="font-size:11.5px; color:var(--text-dim); margin-top:2px;">
+          ${ev.date} · ${TYPE_LABELS[ev.type] || ev.type}${ev.weapon ? ' · ' + (WEAPON_LABELS[ev.weapon] || ev.weapon) : ''}
+        </div>
+      </div>
+    </label>
+  `).join('');
+
+  overlay.classList.add('show');
+
+  document.getElementById('ocrSelectAll').onclick = () => {
+    list.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
+  };
+  document.getElementById('ocrSelectNone').onclick = () => {
+    list.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+  };
+
+  document.getElementById('ocrSaveBtn').onclick = async () => {
+    const checks = list.querySelectorAll('input[type="checkbox"]:checked');
+    const selected = Array.from(checks).map(c => events[parseInt(c.dataset.idx, 10)]);
+    if (!selected.length) { toast('Selecciona almenys un esdeveniment'); return; }
+    const ok = await saveParsedEvents(selected);
+    overlay.classList.remove('show');
+    toast(ok + ' esdeveniments afegits');
+    await reload();
+  };
+
+  document.getElementById('ocrCancelBtn').onclick = () => {
+    overlay.classList.remove('show');
+  };
 }
