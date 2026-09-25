@@ -148,6 +148,12 @@ export default {
   more_backup_invalid: 'Archivo inválido',
   more_backup_confirm: 'Se importarán {docs} documento(s) y {events} evento(s). ¿Continuar?',
   more_backup_empty_file: 'Copia vacía o inválida',
+  more_update: 'Actualizaciones',
+  more_update_check: 'Buscar actualizaciones',
+  more_update_checking: 'Buscando…',
+  more_update_current: 'Estás en la última versión ({version})',
+  more_update_available: '¡Nueva versión disponible!',
+  more_update_error: 'No se ha podido comprobar',  
   more_danger: 'Zona de peligro',
   more_danger_desc: 'Borrar todos los documentos y eventos de este dispositivo.',
   more_danger_btn: 'Borrar todo',
@@ -197,4 +203,9 @@ export default {
   common_ok: 'OK',
   common_close: 'Cerrar',
   boot_error: 'Error al arrancar la app'
+
+  update_available: 'Hay una nueva versión disponible',
+  update_apply: 'Actualizar',
+  changelog_title: 'Novedades de la versión',
+  changelog_ok: 'Entendido',
 };

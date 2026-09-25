@@ -1,10 +1,13 @@
-const CACHE_NAME = 'cartera-tirador-v6.0';
+const CACHE_NAME = 'cartera-tirador-v6.1';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
   './css/styles.css',
   './js/app.js',
+  './js/config.js',
+  './js/changelog.js',
+  './js/updater.js',
   './js/ui.js',
   './js/db.js',
   './js/files.js',
@@ -19,6 +22,7 @@ const APP_SHELL = [
   './js/i18n-es.js',
   './js/security.js',
   './js/backup.js',
+  './icons/favicon.png',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -54,6 +58,13 @@ self.addEventListener('fetch', event => {
       }).catch(() => caches.match('./index.html'));
     })
   );
+});
+
+// Missatge per forçar l'activació immediata
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('notificationclick', event => {

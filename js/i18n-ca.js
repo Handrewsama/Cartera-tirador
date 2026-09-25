@@ -148,6 +148,12 @@ export default {
   more_backup_invalid: 'Fitxer no vàlid',
   more_backup_confirm: "S'importaran {docs} document(s) i {events} esdeveniment(s). Continuar?",
   more_backup_empty_file: 'Còpia buida o no vàlida',
+  more_update: 'Actualitzacions',
+  more_update_check: 'Buscar actualitzacions',
+  more_update_checking: 'Buscant…',
+  more_update_current: 'Estàs a l\'última versió ({version})',
+  more_update_available: 'Nova versió disponible!',
+  more_update_error: 'No s\'ha pogut comprovar',  
   more_danger: 'Zona de perill',
   more_danger_desc: "Esborrar tots els documents i esdeveniments d'aquest dispositiu.",
   more_danger_btn: 'Esborrar tot',
@@ -197,4 +203,9 @@ export default {
   common_ok: 'OK',
   common_close: 'Tancar',
   boot_error: "Error en arrencar l'app"
+  
+  update_available: 'Hi ha una nova versió disponible',
+  update_apply: 'Actualitzar',
+  changelog_title: 'Novetats de la versió',
+  changelog_ok: 'Entesos',
 };

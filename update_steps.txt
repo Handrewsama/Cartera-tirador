@@ -1,0 +1,33 @@
+6️⃣ Pujar versió (perquè es vegi el canvi)
+
+js/config.js
+
+export const APP_VERSION = 'v6.2';
+export const BUILD_DATE = '2026-09-25';
+export const CACHE_VERSION = 'v6.2';
+
+js/changelog.js
+
+Afegeix una entrada nova al principi de l'array:
+
+{
+  version: 'v6.2',
+  date: '2026-09-25',
+  title: { es: 'Novedades', ca: 'Novetats' },
+  changes: {
+    es: [
+      'Botón "Buscar actualizaciones" en la pestaña Más',
+      'Detección automática de nuevas versiones',
+      'Pantalla de novedades al actualizar'
+    ],
+    ca: [
+      'Botó "Buscar actualitzacions" a la pestanya Més',
+      'Detecció automàtica de noves versions',
+      'Pantalla de novetats en actualitzar'
+    ]
+  }
+},
+
+service-worker.js
+
+const CACHE_NAME = 'cartera-tirador-v6.2';

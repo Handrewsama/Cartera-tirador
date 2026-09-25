@@ -5,6 +5,8 @@ import { initNotificationsUI } from './notifications.js';
 import { isPinSet, setPin, removePin, isBiometricEnabled, isBiometricAvailable,
          registerBiometric, disableBiometric } from './security.js';
 import { isAutoBackupEnabled, setAutoBackup, performBackup, getLastBackupDate } from './backup.js';
+import { manualCheck } from './updater.js';
+import { APP_VERSION } from './config.js';
 import { t } from './i18n.js';
 
 export async function initSettings({ onReload }) {
@@ -133,7 +135,7 @@ export async function initSettings({ onReload }) {
     refreshBackupUI();
   });
 
-  /* ---------- Compressió ---------- */
+  /* ---------- Compressió d'imatges ---------- */
   function refreshCompressUI() {
     const lvl = getCompressLevel();
     document.querySelectorAll('#compressRow [data-compress]').forEach(b =>
@@ -146,6 +148,17 @@ export async function initSettings({ onReload }) {
     });
   });
 
+  /* ---------- Comprovació manual d'actualitzacions ---------- */
+  const checkBtn = document.getElementById('checkUpdateBtn');
+  const updateStatus = document.getElementById('updateStatus');
+  if (updateStatus) {
+    updateStatus.textContent = t('more_update_current', { version: APP_VERSION });
+  }
+  if (checkBtn) {
+    checkBtn.addEventListener('click', manualCheck);
+  }
+
+  /* ---------- Inicialitzacions ---------- */
   await refreshSecUI();
   refreshBackupUI();
   refreshCompressUI();
