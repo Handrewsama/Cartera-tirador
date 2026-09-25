@@ -1,14 +1,15 @@
 import { getAll, put, del, getOne, STORE_DOCS } from './db.js';
 import { toast } from './ui.js';
 import { escapeHtml, slugify, extFromDataUrl, dataUrlToBlob, stamp } from './utils.js';
-import { saveFileToDevice } from './files.js';
+import { saveFileToDevice, compressImage, getCompressLevel } from './files.js';
+import { t } from './i18n.js';
 
-const CATS = {
-  'Llicència': { label: 'Llicència federativa' },
-  'Soci': { label: 'Targeta de soci' },
-  'Arma': { label: "Guia d'arma" },
-  'Altres': { label: 'Altres' }
-};
+const CATS = () => ({
+  'Llicència': { label: t('docs_cat_licencia') },
+  'Soci': { label: t('docs_cat_soci') },
+  'Arma': { label: t('docs_cat_arma') },
+  'Altres': { label: t('docs_cat_altres') }
+});
 
 const DOC_ICON = '<svg viewBox="0 0 24 24"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H15l5 5v9.5c0 .83-.67 1.5-1.5 1.5h-14C3.67 20 3 19.33 3 18.5v-13z"/><path d="M14 4v5h5"/></svg>';
 
@@ -50,12 +51,12 @@ function docImages(d) {
 
 function renderChips() {
   const wrap = document.getElementById('chips');
-  const cats = ['Tots'].concat(Object.keys(CATS));
+  const cats = ['Tots'].concat(Object.keys(CATS()));
   wrap.innerHTML = '';
   cats.forEach(c => {
     const el = document.createElement('button');
     el.className = 'chip' + (c === activeFilter ? ' active' : '');
-    el.textContent = c === 'Tots' ? 'Tots' : CATS[c].label;
+    el.textContent = c === 'Tots' ? t('docs_all') : CATS()[c].label;
     el.addEventListener('click', () => { activeFilter = c; renderChips(); renderDocs(); });
     wrap.appendChild(el);
   });
@@ -68,8 +69,8 @@ function renderDocs() {
 
   if (list.length === 0) {
     wrap.innerHTML = `<div class="empty-state">${DOC_ICON}<p>${cache.length === 0
-      ? 'Encara no tens cap document. Toca el botó + per afegir la teva llicència, la targeta de soci o la guia d\'una arma.'
-      : 'Cap document en aquesta categoria.'}</p></div>`;
+      ? t('docs_empty')
+      : t('docs_empty_cat')}</p></div>`;
     return;
   }
 
@@ -83,7 +84,7 @@ function renderDocs() {
       `<div class="thumb">${imgs.length ? `<img src="${imgs[0]}" alt="">` : DOC_ICON}
         ${imgs.length > 1 ? `<span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;">${imgs.length}</span>` : ''}
       </div>
-      <div class="meta"><span class="cat">${CATS[d.category] ? CATS[d.category].label : d.category}</span>
+      <div class="meta"><span class="cat">${CATS()[d.category] ? CATS()[d.category].label : d.category}</span>
       <span class="title">${escapeHtml(d.title)}</span></div>`;
     card.addEventListener('click', () => openViewer(d));
     grid.appendChild(card);
@@ -92,7 +93,6 @@ function renderDocs() {
   wrap.appendChild(grid);
 }
 
-/* ---------- Afegir document ---------- */
 function openAddSheet() {
   document.getElementById('fCategory').value = 'Llicència';
   document.getElementById('fTitle').value = '';
@@ -111,15 +111,15 @@ function renderPreviewStrip() {
   const strip = document.createElement('div');
   strip.className = 'preview-strip';
   pendingImages.forEach((src, idx) => {
-    const t = document.createElement('div');
-    t.className = 'preview-thumb';
-    t.innerHTML = `<img src="${src}"><button>&times;</button>`;
-    t.querySelector('button').addEventListener('click', () => {
+    const tt = document.createElement('div');
+    tt.className = 'preview-thumb';
+    tt.innerHTML = `<img src="${src}"><button>&times;</button>`;
+    tt.querySelector('button').addEventListener('click', () => {
       pendingImages.splice(idx, 1);
       renderPreviewStrip();
       updateSaveEnabled();
     });
-    strip.appendChild(t);
+    strip.appendChild(tt);
   });
   wrap.innerHTML = '';
   wrap.appendChild(strip);
@@ -136,7 +136,7 @@ function handleFiles(fileList) {
       if (--pending === 0) { renderPreviewStrip(); updateSaveEnabled(); }
     };
     reader.onerror = () => {
-      toast('No s\'ha pogut llegir alguna imatge');
+      toast(t('docs_read_error'));
       if (--pending === 0) { renderPreviewStrip(); updateSaveEnabled(); }
     };
     reader.readAsDataURL(file);
@@ -151,29 +151,36 @@ function updateSaveEnabled() {
 async function saveDoc() {
   const btn = document.getElementById('saveDocBtn');
   if (btn.disabled) return;
+
+  const level = getCompressLevel();
+  const compressed = [];
+  for (const img of pendingImages) {
+    compressed.push(await compressImage(img, level));
+  }
+
   const doc = {
     id: 'd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
     category: document.getElementById('fCategory').value,
     title: document.getElementById('fTitle').value.trim(),
-    images: pendingImages.slice(),
+    images: compressed,
     createdAt: Date.now()
   };
   btn.disabled = true;
-  btn.textContent = 'Desant…';
+  btn.textContent = t('docs_saving');
   const ok = await put(STORE_DOCS, doc);
   let verified = false;
   if (ok) {
     const back = await getOne(STORE_DOCS, doc.id);
     verified = !!(back && back.id === doc.id);
   }
-  btn.textContent = 'Desar document';
+  btn.textContent = t('docs_save');
   if (!verified) {
-    toast('No s\'ha pogut desar de forma fiable. Torna-ho a provar.');
+    toast(t('docs_save_error'));
     updateSaveEnabled();
     return;
   }
   closeAddSheet();
-  toast('Document desat');
+  toast(t('docs_saved'));
   await reload();
   saveImagesToDisk(doc);
 }
@@ -191,14 +198,14 @@ async function saveImagesToDisk(doc) {
       if (await saveFileToDevice(fname, blob)) saved++;
     } catch (e) { console.warn(e); }
   }
-  if (saved > 0) toast(saved + (saved === 1 ? ' fitxer desat a la carpeta' : ' fitxers desats a la carpeta'));
+  if (saved === 1) toast(t('docs_files_saved'));
+  else if (saved > 1) toast(t('docs_files_saved_plural'));
 }
 
-/* ---------- Viewer ---------- */
 function openViewer(d) {
   currentDoc = d;
   renderViewerGallery();
-  document.getElementById('viewerCat').textContent = CATS[d.category] ? CATS[d.category].label : d.category;
+  document.getElementById('viewerCat').textContent = CATS()[d.category] ? CATS()[d.category].label : d.category;
   document.getElementById('viewerTitle').textContent = d.title;
   document.getElementById('viewer').classList.add('show');
 }
@@ -240,22 +247,22 @@ function renderViewerGallery() {
 
 async function removeImage(idx) {
   const imgs = docImages(currentDoc).slice();
-  if (imgs.length <= 1) { toast('Per treure l\'última imatge, esborra el document sencer'); return; }
+  if (imgs.length <= 1) { toast(t('docs_image_last')); return; }
   imgs.splice(idx, 1);
   currentDoc.images = imgs;
   delete currentDoc.image;
   if (await put(STORE_DOCS, currentDoc)) {
     renderViewerGallery();
     reload();
-  } else toast('No s\'ha pogut actualitzar');
+  } else toast(t('docs_update_error'));
 }
 
 async function deleteCurrentDoc() {
   if (!currentDoc) return;
-  if (!confirm('Esborrar aquest document i totes les seves imatges?')) return;
+  if (!confirm(t('docs_delete_confirm'))) return;
   if (await del(STORE_DOCS, currentDoc.id)) {
     document.getElementById('viewer').classList.remove('show');
-    toast('Document esborrat');
+    toast(t('docs_deleted'));
     reload();
-  } else toast('No s\'ha pogut esborrar');
+  } else toast(t('docs_update_error'));
 }

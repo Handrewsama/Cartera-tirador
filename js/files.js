@@ -1,5 +1,6 @@
 import { metaGet, metaSet, metaDel } from './db.js';
 import { toast } from './ui.js';
+import { t } from './i18n.js';
 
 const HANDLE_KEY = 'saveFolderHandle';
 let dirHandle = null;
@@ -12,7 +13,7 @@ export async function initFolderPicker() {
   if (!statusEl) return;
 
   if (!window.showDirectoryPicker) {
-    statusEl.textContent = 'Aquest navegador no permet triar carpeta. Les imatges es desaran a Baixades.';
+    statusEl.textContent = t('more_folder_unsupported');
     pickBtn.disabled = true;
     return;
   }
@@ -36,9 +37,9 @@ export async function initFolderPicker() {
       dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
       await metaSet(HANDLE_KEY, dirHandle);
       updateStatus();
-      toast('Carpeta: ' + dirHandle.name);
+      toast(t('more_folder_saved', { name: dirHandle.name }));
     } catch (e) {
-      if (e.name !== 'AbortError') toast('No s\'ha pogut triar la carpeta');
+      if (e.name !== 'AbortError') toast(t('more_folder_error'));
     }
   });
 
@@ -46,19 +47,18 @@ export async function initFolderPicker() {
     dirHandle = null;
     await metaDel(HANDLE_KEY);
     updateStatus();
-    toast('Carpeta esborrada');
+    toast(t('more_folder_removed'));
   });
 
   function updateStatus() {
     statusEl.textContent = dirHandle
-      ? '✓ Carpeta configurada: ' + dirHandle.name
-      : 'Cap carpeta configurada. Les imatges es desaran a Baixades per defecte.';
+      ? t('more_folder_saved', { name: dirHandle.name })
+      : t('more_folder_none');
   }
 }
 
 /* ---------- Desament universal ---------- */
 export async function saveFileToDevice(filename, blob) {
-  // 1) Carpeta configurada
   if (dirHandle) {
     try {
       const fh = await dirHandle.getFileHandle(filename, { create: true });
@@ -73,7 +73,6 @@ export async function saveFileToDevice(filename, blob) {
       }
     }
   }
-  // 2) Fallback: descàrrega
   try {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -82,4 +81,42 @@ export async function saveFileToDevice(filename, blob) {
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     return true;
   } catch (e) { return false; }
+}
+
+/* ---------- Compressió d'imatges ---------- */
+export function getCompressLevel() {
+  return localStorage.getItem('tt_img_compress') || 'medium';
+}
+
+export function setCompressLevel(level) {
+  localStorage.setItem('tt_img_compress', level);
+}
+
+export async function compressImage(dataUrl, level) {
+  if (!level || level === 'off') return dataUrl;
+  const quality = level === 'high' ? 0.6 : 0.8;
+  const maxDim = level === 'high' ? 1280 : 1920;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const ratio = Math.min(maxDim / width, maxDim / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      try {
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      } catch (e) {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
 }

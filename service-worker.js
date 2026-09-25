@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cartera-tirador-v5.1';
+const CACHE_NAME = 'cartera-tirador-v6.0';
 const APP_SHELL = [
   './',
   './index.html',
@@ -14,6 +14,11 @@ const APP_SHELL = [
   './js/settings.js',
   './js/utils.js',
   './js/ocr.js',
+  './js/i18n.js',
+  './js/i18n-ca.js',
+  './js/i18n-es.js',
+  './js/security.js',
+  './js/backup.js',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png'

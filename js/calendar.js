@@ -1,8 +1,9 @@
 import { getAll, put, del, STORE_EVENTS } from './db.js';
 import { toast } from './ui.js';
-import { escapeHtml, ymd, TYPE_COLORS, TYPE_LABELS, WEAPON_LABELS } from './utils.js';
+import { escapeHtml, ymd, TYPE_COLORS, typeLabel, weaponLabel } from './utils.js';
 import { checkDueReminders, downloadEventICS } from './notifications.js';
 import { extractTextFromFile, parseAnyCalendar, saveParsedEvents } from './ocr.js';
+import { t } from './i18n.js';
 
 let eventsCache = [];
 let currentMonth = new Date();
@@ -10,9 +11,6 @@ let editingId = null;
 let filterType = 'Tots';
 let filterWeapon = 'Totes';
 
-/* =========================================================
-   INICIALITZACIÓ
-   ========================================================= */
 export async function initCalendar() {
   document.getElementById('prevMonth').addEventListener('click', () => {
     currentMonth.setMonth(currentMonth.getMonth() - 1);
@@ -38,15 +36,14 @@ export async function initCalendar() {
     if (ev) downloadEventICS(ev);
   });
 
-  /* ---------- OCR + Enganxar text ---------- */
-document.getElementById('ocrBtn').addEventListener('click', () => {
-  document.getElementById('ocrFile').click();
-});
-document.getElementById('ocrFile').addEventListener('change', async e => {
-  const file = e.target.files[0];
-  e.target.value = '';
-  if (file) await processAnyFile(file);
-});
+  document.getElementById('ocrBtn').addEventListener('click', () => {
+    document.getElementById('ocrFile').click();
+  });
+  document.getElementById('ocrFile').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (file) await processAnyFile(file);
+  });
 
   document.getElementById('pasteBtn').addEventListener('click', () => {
     document.getElementById('pasteText').value = '';
@@ -57,10 +54,10 @@ document.getElementById('ocrFile').addEventListener('change', async e => {
   });
   document.getElementById('pasteAnalyzeBtn').addEventListener('click', () => {
     const text = document.getElementById('pasteText').value;
-    if (text.length < 20) { toast('Enganxa primer el text'); return; }
+    if (text.length < 20) { toast(t('ocr_no_text')); return; }
     document.getElementById('pasteOverlay').classList.remove('show');
     const result = parseAnyCalendar(text);
-    if (!result.events.length) { toast('No s\'ha detectat cap data'); return; }
+    if (!result.events.length) { toast(t('ocr_no_data')); return; }
     showOCRPreview(result.events, result.kind);
   });
 
@@ -76,9 +73,6 @@ export async function reload() {
   checkLicenseAlert();
 }
 
-/* =========================================================
-   FILTRES
-   ========================================================= */
 function renderCalFilters() {
   const wrap = document.getElementById('calFilters');
   if (!wrap) return;
@@ -88,11 +82,11 @@ function renderCalFilters() {
   const row1 = document.createElement('div');
   row1.className = 'chips';
   row1.style.paddingBottom = '8px';
-  types.forEach(t => {
+  types.forEach(tt => {
     const b = document.createElement('button');
-    b.className = 'chip' + (t === filterType ? ' active' : '');
-    b.textContent = t === 'Tots' ? 'Tots els tipus' : (TYPE_LABELS[t] || t);
-    b.onclick = () => { filterType = t; renderCalFilters(); renderCalendar(); renderLists(); };
+    b.className = 'chip' + (tt === filterType ? ' active' : '');
+    b.textContent = tt === 'Tots' ? t('cal_filter_types') : typeLabel(tt);
+    b.onclick = () => { filterType = tt; renderCalFilters(); renderCalendar(); renderLists(); };
     row1.appendChild(b);
   });
 
@@ -102,7 +96,7 @@ function renderCalFilters() {
   weapons.forEach(w => {
     const b = document.createElement('button');
     b.className = 'chip' + (w === filterWeapon ? ' active' : '');
-    b.textContent = w === 'Totes' ? 'Totes les armes' : (WEAPON_LABELS[w] || w);
+    b.textContent = w === 'Totes' ? t('cal_filter_weapons') : weaponLabel(w);
     b.onclick = () => { filterWeapon = w; renderCalFilters(); renderCalendar(); renderLists(); };
     row2.appendChild(b);
   });
@@ -120,15 +114,15 @@ function filterEvent(e) {
   return true;
 }
 
-/* =========================================================
-   CALENDARI MENSUAL
-   ========================================================= */
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   const label = document.getElementById('monthLabel');
   const y = currentMonth.getFullYear();
   const m = currentMonth.getMonth();
-  label.textContent = currentMonth.toLocaleDateString('ca-ES', { month: 'long', year: 'numeric' });
+  label.textContent = currentMonth.toLocaleDateString(
+    document.documentElement.lang === 'ca' ? 'ca-ES' : 'es-ES',
+    { month: 'long', year: 'numeric' }
+  );
 
   const firstDay = new Date(y, m, 1);
   const startWeekday = (firstDay.getDay() + 6) % 7;
@@ -136,7 +130,10 @@ function renderCalendar() {
   const todayStr = ymd(new Date());
 
   let html = '';
-  ['dl', 'dt', 'dc', 'dj', 'dv', 'ds', 'dg'].forEach(d => {
+  const weekdays = document.documentElement.lang === 'ca'
+    ? ['dl','dt','dc','dj','dv','ds','dg']
+    : ['lu','ma','mi','ju','vi','sá','do'];
+  weekdays.forEach(d => {
     html += `<div style="text-align:center;font-size:10.5px;color:var(--text-dim);font-weight:700;padding:4px 0;">${d}</div>`;
   });
   for (let i = 0; i < startWeekday; i++) html += '<div></div>';
@@ -160,9 +157,6 @@ function renderCalendar() {
     el.addEventListener('click', () => openSheet(null, el.dataset.date)));
 }
 
-/* =========================================================
-   LLISTES
-   ========================================================= */
 function renderLists() {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const visible = eventsCache.filter(filterEvent);
@@ -175,7 +169,7 @@ function renderLists() {
     .sort((a, b) => b.date.localeCompare(a.date));
 
   const render = list => list.length === 0
-    ? '<div class="empty-state" style="padding:20px;"><p>Cap esdeveniment.</p></div>'
+    ? `<div class="empty-state" style="padding:20px;"><p>${t('cal_empty')}</p></div>`
     : list.map(e => `
       <div class="item-tirada" data-id="${e.id}" style="border-left:3px solid ${TYPE_COLORS[e.type] || '#888'}">
         <div class="tirada-detalls">
@@ -183,7 +177,7 @@ function renderLists() {
           ${e.reminder ? '<span style="font-size:11px;color:var(--accent);margin-left:6px;">🔔</span>' : ''}
           <br>
           <small style="color:var(--text-dim);">
-            ${TYPE_LABELS[e.type] || e.type}${e.weapon ? ' · ' + (WEAPON_LABELS[e.weapon] || e.weapon) : ''} · ${e.date}
+            ${typeLabel(e.type)}${e.weapon ? ' · ' + weaponLabel(e.weapon) : ''} · ${e.date}
           </small>
         </div>
         <button class="boto-del" data-del="${e.id}">✕</button>
@@ -196,7 +190,7 @@ function renderLists() {
   document.querySelectorAll('[data-del]').forEach(b =>
     b.addEventListener('click', async ev => {
       ev.stopPropagation();
-      if (!confirm('Esborrar aquest esdeveniment?')) return;
+      if (!confirm(t('cal_event_delete_confirm'))) return;
       await del(STORE_EVENTS, b.dataset.del);
       await reload();
     }));
@@ -207,12 +201,10 @@ function renderLists() {
     }));
 }
 
-/* =========================================================
-   SHEET D'ESDEVENIMENT
-   ========================================================= */
 function openSheet(ev, presetDate) {
   editingId = ev ? ev.id : null;
-  document.getElementById('eventSheetTitle').textContent = ev ? 'Editar esdeveniment' : 'Afegir esdeveniment';
+  document.getElementById('eventSheetTitle').textContent =
+    ev ? t('cal_event_edit') : t('cal_event_title');
   document.getElementById('evType').value = ev ? ev.type : 'controlada';
   document.getElementById('evDate').value = ev ? ev.date : (presetDate || ymd(new Date()));
   document.getElementById('evTitle').value = ev ? ev.title : '';
@@ -231,7 +223,7 @@ function closeSheet() { document.getElementById('eventOverlay').classList.remove
 async function saveEvent() {
   const date = document.getElementById('evDate').value;
   const title = document.getElementById('evTitle').value.trim();
-  if (!date || !title) { toast('Cal una data i un títol'); return; }
+  if (!date || !title) { toast(t('cal_event_date_title_required')); return; }
   const prev = editingId ? eventsCache.find(e => e.id === editingId) : null;
   const ev = {
     id: editingId || ('e_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
@@ -247,22 +239,19 @@ async function saveEvent() {
   };
   await put(STORE_EVENTS, ev);
   closeSheet();
-  toast('Esdeveniment desat');
+  toast(t('cal_event_saved'));
   await reload();
 }
 
 async function deleteCurrent() {
   if (!editingId) return;
-  if (!confirm('Esborrar aquest esdeveniment?')) return;
+  if (!confirm(t('cal_event_delete_confirm'))) return;
   await del(STORE_EVENTS, editingId);
   closeSheet();
-  toast('Esborrat');
+  toast(t('cal_event_deleted'));
   await reload();
 }
 
-/* =========================================================
-   ALERTA DE CADUCITAT
-   ========================================================= */
 function checkLicenseAlert() {
   const today = new Date();
   const oficials = eventsCache
@@ -277,23 +266,20 @@ function checkLicenseAlert() {
   box.style.display = mesos >= 12 ? 'block' : 'none';
 }
 
-/* =========================================================
-   OCR
-   ========================================================= */
 async function processAnyFile(file) {
   const overlay = document.getElementById('ocrOverlay');
   const progress = document.getElementById('ocrProgress');
   const status = document.getElementById('ocrStatus');
   overlay.classList.add('show');
-  status.textContent = 'Preparant…';
+  status.textContent = t('ocr_preparing');
   progress.textContent = '';
 
   try {
     const name = (file.name || '').toLowerCase();
-    let statusMsg = 'Llegint el fitxer…';
-    if (name.endsWith('.pdf')) statusMsg = 'Llegint PDF…';
-    else if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv')) statusMsg = 'Llegint full de càlcul…';
-    else if (/\.(jpe?g|png|webp|heic|heif)$/i.test(name)) statusMsg = 'Llegint imatge (OCR)…';
+    let statusMsg = t('ocr_file');
+    if (name.endsWith('.pdf')) statusMsg = t('ocr_pdf');
+    else if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv')) statusMsg = t('ocr_excel');
+    else if (/\.(jpe?g|png|webp|heic|heif)$/i.test(name)) statusMsg = t('ocr_image');
 
     status.textContent = statusMsg;
 
@@ -301,7 +287,7 @@ async function processAnyFile(file) {
       progress.textContent = pct + '%';
     });
 
-    status.textContent = 'Analitzant dates…';
+    status.textContent = t('ocr_analyzing');
     progress.textContent = '';
 
     const result = parseAnyCalendar(text, source);
@@ -309,7 +295,7 @@ async function processAnyFile(file) {
     overlay.classList.remove('show');
 
     if (!result.events.length) {
-      toast('No s\'ha detectat cap data al document');
+      toast(t('ocr_no_data'));
       return;
     }
 
@@ -317,7 +303,7 @@ async function processAnyFile(file) {
   } catch (err) {
     console.error(err);
     overlay.classList.remove('show');
-    toast('Error: ' + (err.message || 'no s\'ha pogut llegir el fitxer'));
+    toast(t('ocr_error') + ': ' + (err.message || ''));
   }
 }
 
@@ -327,26 +313,27 @@ function showOCRPreview(events, kind, source) {
   const info = document.getElementById('ocrPreviewInfo');
 
   const kindLabel = kind === 'grid'
-  ? 'Calendari anual de club'
-  : kind === 'license'
-  ? 'Calendari de llicència F / campionat'
-  : kind === 'tabular'
-  ? 'Full de càlcul'
-  : 'Calendari';
+    ? t('ocr_kind_grid')
+    : kind === 'license'
+    ? t('ocr_kind_license')
+    : kind === 'tabular'
+    ? t('ocr_kind_tabular')
+    : t('cal_title');
 
-const srcLabel = source === 'pdf-text'
-  ? 'PDF (text seleccionable)'
-  : source === 'pdf-ocr'
-  ? 'PDF escanejat (OCR)'
-  : source === 'spreadsheet'
-  ? 'Excel / CSV'
-  : source === 'image-ocr'
-  ? 'Imatge (OCR)'
-  : source === 'text'
-  ? 'Text pla'
-  : '';
+  const srcLabel = source === 'pdf-text'
+    ? t('ocr_source_pdf_text')
+    : source === 'pdf-ocr'
+    ? t('ocr_source_pdf_ocr')
+    : source === 'spreadsheet'
+    ? t('ocr_source_spreadsheet')
+    : source === 'image-ocr'
+    ? t('ocr_source_image_ocr')
+    : source === 'text'
+    ? t('ocr_source_text')
+    : '';
 
-info.textContent = `${kindLabel}${srcLabel ? ' · ' + srcLabel : ''} · ${events.length} esdeveniments detectats. Revisa i desmarca el que no vulguis.`;
+  info.textContent = `${kindLabel}${srcLabel ? ' · ' + srcLabel : ''} · ` +
+    t('ocr_detected_info', { count: events.length });
 
   list.innerHTML = events.map((ev, i) => `
     <label style="display:flex; gap:10px; align-items:flex-start;
@@ -355,7 +342,7 @@ info.textContent = `${kindLabel}${srcLabel ? ' · ' + srcLabel : ''} · ${events
       <div style="flex:1;">
         <div style="font-weight:600; font-size:13px;">${escapeHtml(ev.title)}</div>
         <div style="font-size:11.5px; color:var(--text-dim); margin-top:2px;">
-          ${ev.date} · ${TYPE_LABELS[ev.type] || ev.type}${ev.weapon ? ' · ' + (WEAPON_LABELS[ev.weapon] || ev.weapon) : ''}
+          ${ev.date} · ${typeLabel(ev.type)}${ev.weapon ? ' · ' + weaponLabel(ev.weapon) : ''}
         </div>
       </div>
     </label>
@@ -373,10 +360,10 @@ info.textContent = `${kindLabel}${srcLabel ? ' · ' + srcLabel : ''} · ${events
   document.getElementById('ocrSaveBtn').onclick = async () => {
     const checks = list.querySelectorAll('input[type="checkbox"]:checked');
     const selected = Array.from(checks).map(c => events[parseInt(c.dataset.idx, 10)]);
-    if (!selected.length) { toast('Selecciona almenys un esdeveniment'); return; }
+    if (!selected.length) { toast(t('ocr_select_one')); return; }
     const ok = await saveParsedEvents(selected);
     overlay.classList.remove('show');
-    toast(ok + ' esdeveniments afegits');
+    toast(t('ocr_added', { count: ok }));
     await reload();
   };
 

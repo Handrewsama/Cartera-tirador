@@ -1,7 +1,7 @@
 import { toast } from './ui.js';
 import { saveFileToDevice } from './files.js';
-import { metaGet, metaSet } from './db.js';
-import { TYPE_LABELS } from './utils.js';
+import { typeLabel } from './utils.js';
+import { t } from './i18n.js';
 
 export async function initNotificationsUI() {
   const statusEl = document.getElementById('notifStatus');
@@ -12,28 +12,28 @@ export async function initNotificationsUI() {
   updateStatus();
 
   askBtn.addEventListener('click', async () => {
-    if (!('Notification' in window)) { toast('Aquest navegador no suporta notificacions'); return; }
+    if (!('Notification' in window)) { toast(t('more_notif_unsupported')); return; }
     const p = await Notification.requestPermission();
     updateStatus();
-    if (p === 'granted') toast('Notificacions activades');
-    else toast('Permís denegat');
+    if (p === 'granted') toast(t('more_notif_granted'));
+    else toast(t('more_notif_denied'));
   });
 
   testBtn.addEventListener('click', async () => {
     if (!('Notification' in window) || Notification.permission !== 'granted') {
-      toast('Activa primer les notificacions');
+      toast(t('more_notif_not_granted'));
       return;
     }
-    await showNotification('Cartera del Tirador', 'Aquesta és una notificació de prova 🔔');
+    await showNotification(t('more_notif_test_title'), t('more_notif_test_body'));
   });
 
   function updateStatus() {
     if (!('Notification' in window)) {
-      statusEl.textContent = 'Aquest navegador no suporta notificacions.';
+      statusEl.textContent = t('more_notif_unsupported');
       askBtn.disabled = true;
       return;
     }
-    statusEl.textContent = 'Permís: ' + Notification.permission;
+    statusEl.textContent = t('more_notif_status', { status: Notification.permission });
   }
 }
 
@@ -54,7 +54,6 @@ export async function showNotification(title, body) {
   }
 }
 
-/* Comprova avisos propers i dispara notificacions dins l'app */
 export async function checkDueReminders(events, onUpdate) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   let changed = false;
@@ -74,7 +73,6 @@ export async function checkDueReminders(events, onUpdate) {
   return changed;
 }
 
-/* Exporta un esdeveniment com a .ics per afegir al calendari del telèfon */
 export async function downloadEventICS(ev) {
   const dt = ev.date.replace(/-/g, '');
   const now = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
@@ -88,7 +86,7 @@ export async function downloadEventICS(ev) {
     `DTSTAMP:${now}`,
     `DTSTART;VALUE=DATE:${dt}`,
     `SUMMARY:${ev.title}`,
-    `DESCRIPTION:${(ev.notes || TYPE_LABELS[ev.type] || '').replace(/\n/g, '\\n')}`,
+    `DESCRIPTION:${(ev.notes || typeLabel(ev.type) || '').replace(/\n/g, '\\n')}`,
     'BEGIN:VALARM',
     `TRIGGER:-P${days}D`,
     'ACTION:DISPLAY',
@@ -99,5 +97,5 @@ export async function downloadEventICS(ev) {
   ].join('\r\n');
   const blob = new Blob([ics], { type: 'text/calendar' });
   const ok = await saveFileToDevice(`tirada-${ev.date}.ics`, blob);
-  toast(ok ? 'Fitxer .ics desat' : 'No s\'ha pogut desar el .ics');
+  toast(ok ? 'ICS OK' : 'ICS error');
 }

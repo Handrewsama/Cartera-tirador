@@ -46,11 +46,11 @@ export function initTheme() {
   const apply = t => {
     if (t === 'auto') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', t);
-    document.querySelectorAll('.theme-btn').forEach(b =>
+    document.querySelectorAll('.theme-btn[data-theme]').forEach(b =>
       b.classList.toggle('active', b.dataset.theme === t));
   };
   apply(saved);
-  document.querySelectorAll('.theme-btn').forEach(b => {
+  document.querySelectorAll('.theme-btn[data-theme]').forEach(b => {
     b.addEventListener('click', () => {
       localStorage.setItem('tt_theme', b.dataset.theme);
       apply(b.dataset.theme);

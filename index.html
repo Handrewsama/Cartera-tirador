@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ca">
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#10141a">
-<title>Cartera del Tirador</title>
+<title data-i18n="app_name">Cartera del Tirador</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icons/icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
@@ -18,22 +18,22 @@
 <div id="app">
 
   <header class="top">
-  <div class="brand"><span class="dot"></span><h1>Cartera del tirador</h1></div>
-  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
-    <span class="sub" id="clock">--:--</span>
-    <span id="appVersion" style="font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono', monospace;">v?</span>
-  </div>
-</header>
+    <div class="brand"><span class="dot"></span><h1 data-i18n="app_name">Cartera del tirador</h1></div>
+    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+      <span class="sub" id="clock">--:--</span>
+      <span id="appVersion" style="font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono', monospace;">v?</span>
+    </div>
+  </header>
 
-  <div id="alerta-obligatoria" class="alerta-caducitat">
-    ⚠️ ATENCIÓ: No s'ha detectat cap tirada oficial/controlada en els últims 12 mesos. Risc de pèrdua de llicència!
+  <div id="alerta-obligatoria" class="alerta-caducitat" data-i18n="alert_license">
+    ⚠️ ATENCIÓN: No se ha detectado ninguna tirada oficial/controlada en los últimos 12 meses. ¡Riesgo de pérdida de licencia!
   </div>
 
   <main>
 
     <!-- ============ DOCUMENTS ============ -->
     <section class="view active" id="view-docs">
-      <div class="section-head"><h2>Documents</h2></div>
+      <div class="section-head"><h2 data-i18n="docs_title">Documentos</h2></div>
       <div class="chips" id="chips"></div>
       <div id="docGridWrap"></div>
     </section>
@@ -41,17 +41,17 @@
     <!-- ============ CALENDARI ============ -->
     <section class="view" id="view-calendar">
       <div class="section-head">
-        <h2>Calendari</h2>
-        <button class="btn-primary" id="addEventBtn" style="width:auto; padding:8px 14px; font-size:13px;">+ Afegir</button>
+        <h2 data-i18n="cal_title">Calendario</h2>
+        <button class="btn-primary" id="addEventBtn" style="width:auto; padding:8px 14px; font-size:13px;" data-i18n="cal_add">+ Añadir</button>
       </div>
 
       <div style="display:flex; gap:8px; margin-bottom:14px;">
-        <button class="btn-secondary" id="ocrBtn" style="margin:0; flex:1;">📷 Importar (PDF/Excel/foto)</button>
-        <button class="btn-secondary" id="pasteBtn" style="margin:0; flex:1;">📋 Enganxar text</button>
+        <button class="btn-secondary" id="ocrBtn" style="margin:0; flex:1;" data-i18n="cal_import_file">📎 Importar (PDF/Excel/foto)</button>
+        <button class="btn-secondary" id="pasteBtn" style="margin:0; flex:1;" data-i18n="cal_paste_text">📋 Pegar texto</button>
       </div>
       <input type="file"
-  accept=".pdf,.xlsx,.xls,.csv,.ods,.txt,image/*,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain"
-  id="ocrFile" style="display:none;">
+        accept=".pdf,.xlsx,.xls,.csv,.ods,.txt,image/*,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain"
+        id="ocrFile" style="display:none;">
 
       <div class="card" style="padding:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -63,61 +63,69 @@
       </div>
 
       <div class="cal-legend">
-        <span><i style="background:#1e90ff"></i>Controlada</span>
-        <span><i style="background:#2ed573"></i>Oficial</span>
-        <span><i style="background:#9b5de5"></i>Categoria</span>
-        <span><i style="background:#f15bb5"></i>Avís</span>
-        <span><i style="background:#ff6a2b"></i>Llicència F</span>
+        <span><i style="background:#1e90ff"></i><span data-i18n="cal_legend_controlada">Controlada</span></span>
+        <span><i style="background:#2ed573"></i><span data-i18n="cal_legend_oficial">Oficial</span></span>
+        <span><i style="background:#9b5de5"></i><span data-i18n="cal_legend_categoria">Categoría</span></span>
+        <span><i style="background:#f15bb5"></i><span data-i18n="cal_legend_avis">Aviso</span></span>
+        <span><i style="background:#ff6a2b"></i><span data-i18n="cal_legend_llicencia_f">Licencia F</span></span>
       </div>
 
       <div id="calFilters"></div>
 
-      <div class="section-head"><h2 style="font-size:16px;">Pròxims esdeveniments</h2></div>
+      <div class="section-head"><h2 style="font-size:16px;" data-i18n="cal_upcoming">Próximos eventos</h2></div>
       <div id="upcomingList"></div>
 
-      <div class="section-head"><h2 style="font-size:16px;">Historial</h2></div>
+      <div class="section-head"><h2 style="font-size:16px;" data-i18n="cal_history">Historial</h2></div>
       <div id="historyList"></div>
     </section>
 
     <!-- ============ MÉS ============ -->
     <section class="view" id="view-more">
-      <div class="section-head"><h2>Més</h2></div>
+      <div class="section-head"><h2 data-i18n="more_title">Más</h2></div>
 
       <div class="card">
-        <div class="card-title">Carpeta de desament</div>
-        <div id="folderStatus" class="card-text">Cap carpeta configurada. Les imatges es desaran a Baixades per defecte.</div>
-        <button class="btn-primary" id="pickFolderBtn">Triar carpeta</button>
-        <button class="btn-secondary" id="clearFolderBtn">Treure carpeta</button>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Recordatoris</div>
-        <div id="notifStatus" class="card-text">Permís de notificacions no sol·licitat.</div>
-        <button class="btn-primary" id="askNotifBtn">Activar notificacions</button>
-        <button class="btn-secondary" id="testNotifBtn">Prova de notificació</button>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Aparença</div>
-        <div class="theme-row">
-          <button class="theme-btn" data-theme="auto">Auto</button>
-          <button class="theme-btn" data-theme="dark">Fosc</button>
-          <button class="theme-btn" data-theme="light">Clar</button>
+        <div class="card-title" data-i18n="more_language">Idioma</div>
+        <div class="theme-row" id="langRow">
+          <button class="theme-btn" data-lang="es">Español</button>
+          <button class="theme-btn" data-lang="ca">Català</button>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title">Còpia de seguretat</div>
-        <div class="card-text">Exporta tots els documents i esdeveniments en un sol fitxer JSON.</div>
-        <button class="btn-primary" id="exportBtn">Exporta còpia</button>
-        <button class="btn-secondary" id="importBtn">Importa còpia</button>
+        <div class="card-title" data-i18n="more_folder">Carpeta de guardado</div>
+        <div id="folderStatus" class="card-text" data-i18n="more_folder_none">Ninguna carpeta configurada...</div>
+        <button class="btn-primary" id="pickFolderBtn" data-i18n="more_folder_pick">Elegir carpeta</button>
+        <button class="btn-secondary" id="clearFolderBtn" data-i18n="more_folder_clear">Quitar carpeta</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title" data-i18n="more_notif">Recordatorios</div>
+        <div id="notifStatus" class="card-text">—</div>
+        <button class="btn-primary" id="askNotifBtn" data-i18n="more_notif_ask">Activar notificaciones</button>
+        <button class="btn-secondary" id="testNotifBtn" data-i18n="more_notif_test">Prueba de notificación</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title" data-i18n="more_theme">Apariencia</div>
+        <div class="theme-row">
+          <button class="theme-btn" data-theme="auto" data-i18n="more_theme_auto">Auto</button>
+          <button class="theme-btn" data-theme="dark" data-i18n="more_theme_dark">Oscuro</button>
+          <button class="theme-btn" data-theme="light" data-i18n="more_theme_light">Claro</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" data-i18n="more_backup">Copia de seguridad</div>
+        <div class="card-text" data-i18n="more_backup_desc">Exporta todos los documentos y eventos en un solo archivo JSON.</div>
+        <button class="btn-primary" id="exportBtn" data-i18n="more_backup_export">Exportar copia</button>
+        <button class="btn-secondary" id="importBtn" data-i18n="more_backup_import">Importar copia</button>
         <input type="file" accept="application/json,.json" id="importFile" style="display:none;">
       </div>
 
       <div class="card">
-        <div class="card-title">Zona de perill</div>
-        <div class="card-text">Esborrar tots els documents i esdeveniments d'aquest dispositiu.</div>
-        <button class="btn-secondary" id="wipeBtn" style="color:var(--danger); border-color:var(--danger);">Esborrar tot</button>
+        <div class="card-title" data-i18n="more_danger">Zona de peligro</div>
+        <div class="card-text" data-i18n="more_danger_desc">Borrar todos los documentos y eventos de este dispositivo.</div>
+        <button class="btn-secondary" id="wipeBtn" style="color:var(--danger); border-color:var(--danger);" data-i18n="more_danger_btn">Borrar todo</button>
       </div>
     </section>
 
@@ -126,19 +134,19 @@
   <nav class="tabbar">
     <button class="tab-btn active" data-view="docs">
       <svg viewBox="0 0 24 24"><path d="M4 5.5C4 4.67 4.67 4 5.5 4H15l5 5v9.5c0 .83-.67 1.5-1.5 1.5h-14C3.67 20 3 19.33 3 18.5v-13z"/><path d="M14 4v5h5"/></svg>
-      Documents
+      <span data-i18n="tab_docs">Documentos</span>
     </button>
     <button class="tab-btn" data-view="calendar">
       <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-      Calendari
+      <span data-i18n="tab_calendar">Calendario</span>
     </button>
     <button class="tab-btn" data-view="more">
       <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>
-      Més
+      <span data-i18n="tab_more">Más</span>
     </button>
   </nav>
 
-  <button class="fab" id="fabAdd" title="Afegir document">
+  <button class="fab" id="fabAdd" title="Add">
     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
   </button>
 
@@ -146,39 +154,39 @@
   <div class="overlay" id="addOverlay">
     <div class="sheet">
       <div class="sheet-handle"></div>
-      <h3>Afegir document</h3>
+      <h3 data-i18n="docs_add">Añadir documento</h3>
       <div class="field">
-        <label>Categoria</label>
+        <label data-i18n="docs_field_cat">Categoría</label>
         <select id="fCategory">
-          <option value="Llicència">Llicència federativa</option>
-          <option value="Soci">Targeta de soci</option>
-          <option value="Arma">Guia d'arma</option>
-          <option value="Altres">Altres</option>
+          <option value="Llicència" data-i18n="docs_cat_licencia">Licencia federativa</option>
+          <option value="Soci" data-i18n="docs_cat_soci">Tarjeta de socio</option>
+          <option value="Arma" data-i18n="docs_cat_arma">Guía de arma</option>
+          <option value="Altres" data-i18n="docs_cat_altres">Otros</option>
         </select>
       </div>
       <div class="field">
-        <label>Títol</label>
-        <input type="text" id="fTitle" placeholder="Ex: Guia Beretta 92FS">
+        <label data-i18n="docs_field_title">Título</label>
+        <input type="text" id="fTitle" data-i18n-ph="docs_field_title_ph" placeholder="Ej: Guía Beretta 92FS">
       </div>
       <div class="field">
-        <label>Imatges</label>
+        <label data-i18n="docs_field_images">Imágenes</label>
         <div id="previewWrap"></div>
         <div class="capture-row">
           <label class="capture-btn">
             <svg viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h1l1.2-1.6A1 1 0 0 1 9 4h6a1 1 0 0 1 .8.4L17 6h1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.4"/></svg>
-            Fer foto
+            <span data-i18n="docs_take_photo">Hacer foto</span>
             <input type="file" accept="image/*" capture="environment" id="fileCamera" style="display:none;">
           </label>
           <label class="capture-btn">
             <svg viewBox="0 0 24 24"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
-            Pujar imatges
+            <span data-i18n="docs_upload">Subir imágenes</span>
             <input type="file" accept="image/*" multiple id="fileUpload" style="display:none;">
           </label>
         </div>
-        <div class="field-hint">Pots afegir-ne més d'una.</div>
+        <div class="field-hint" data-i18n="docs_images_hint">Puedes añadir más de una.</div>
       </div>
-      <button class="btn-primary" id="saveDocBtn" disabled>Desar document</button>
-      <button class="btn-secondary" id="cancelDocBtn">Cancel·la</button>
+      <button class="btn-primary" id="saveDocBtn" disabled data-i18n="docs_save">Guardar documento</button>
+      <button class="btn-secondary" id="cancelDocBtn" data-i18n="docs_cancel">Cancelar</button>
     </div>
   </div>
 
@@ -186,41 +194,41 @@
   <div class="overlay" id="eventOverlay">
     <div class="sheet">
       <div class="sheet-handle"></div>
-      <h3 id="eventSheetTitle">Afegir esdeveniment</h3>
+      <h3 id="eventSheetTitle" data-i18n="cal_event_title">Añadir evento</h3>
       <div class="field">
-        <label>Tipus</label>
+        <label data-i18n="cal_event_type">Tipo</label>
         <select id="evType">
-          <option value="controlada">Tirada controlada</option>
-          <option value="oficial">Tirada oficial</option>
-          <option value="categoria">Tirada per pujar de categoria</option>
-          <option value="llicencia-f">Llicència F (obtenció)</option>
-          <option value="avis">Avís / tirada programada</option>
+          <option value="controlada" data-i18n="ev_controlada">Tirada controlada</option>
+          <option value="oficial" data-i18n="ev_oficial">Tirada oficial</option>
+          <option value="categoria" data-i18n="ev_categoria">Tirada para subir de categoría</option>
+          <option value="llicencia-f" data-i18n="ev_llicencia_f">Licencia F (obtención)</option>
+          <option value="avis" data-i18n="ev_avis">Aviso / tirada programada</option>
         </select>
       </div>
       <div class="field">
-        <label>Data</label>
+        <label data-i18n="cal_event_date">Fecha</label>
         <input type="date" id="evDate" required>
       </div>
       <div class="field">
-        <label>Títol</label>
-        <input type="text" id="evTitle" placeholder="Ex: Tirada Club Sabadell">
+        <label data-i18n="cal_event_name">Título</label>
+        <input type="text" id="evTitle" data-i18n-ph="cal_event_name_ph" placeholder="Ej: Tirada Club Sabadell">
       </div>
       <div class="field">
-        <label>Notes (opcional)</label>
-        <input type="text" id="evNotes" placeholder="Observacions...">
+        <label data-i18n="cal_event_notes">Notas (opcional)</label>
+        <input type="text" id="evNotes" data-i18n-ph="cal_event_notes_ph" placeholder="Observaciones...">
       </div>
       <div class="field" style="display:flex; align-items:center; gap:10px;">
         <input type="checkbox" id="evReminder" style="width:auto;">
-        <label for="evReminder" style="margin:0;">Recordatori al telèfon</label>
+        <label for="evReminder" style="margin:0;" data-i18n="cal_event_reminder">Recordatorio en el teléfono</label>
       </div>
       <div class="field" id="reminderDaysField" style="display:none;">
-        <label>Dies d'antelació</label>
+        <label data-i18n="cal_event_days_before">Días de antelación</label>
         <input type="number" id="evReminderDays" value="3" min="0" max="30">
       </div>
-      <button class="btn-primary" id="saveEventBtn">Desar</button>
-      <button class="btn-secondary" id="icsEventBtn" style="display:none;">Afegir al calendari del telèfon</button>
-      <button class="btn-secondary" id="deleteEventBtn" style="display:none; color:var(--danger); border-color:var(--danger);">Esborrar esdeveniment</button>
-      <button class="btn-secondary" id="cancelEventBtn">Cancel·la</button>
+      <button class="btn-primary" id="saveEventBtn" data-i18n="cal_event_save">Guardar</button>
+      <button class="btn-secondary" id="icsEventBtn" style="display:none;" data-i18n="cal_event_ics">Añadir al calendario del teléfono</button>
+      <button class="btn-secondary" id="deleteEventBtn" style="display:none; color:var(--danger); border-color:var(--danger);" data-i18n="cal_event_delete_btn">Eliminar evento</button>
+      <button class="btn-secondary" id="cancelEventBtn" data-i18n="cal_cancel">Cancelar</button>
     </div>
   </div>
 
@@ -228,10 +236,10 @@
   <div class="overlay" id="ocrOverlay">
     <div class="sheet" style="text-align:center;">
       <div class="sheet-handle"></div>
-      <h3>Llegint el calendari…</h3>
-      <div id="ocrStatus" style="color:var(--text-dim); font-size:13.5px; margin:16px 0;">Preparant…</div>
+      <h3 data-i18n="ocr_reading">Leyendo el calendario…</h3>
+      <div id="ocrStatus" style="color:var(--text-dim); font-size:13.5px; margin:16px 0;" data-i18n="ocr_preparing">Preparando…</div>
       <div id="ocrProgress" style="font-size:28px; font-weight:700; color:var(--accent); font-family:'JetBrains Mono', monospace;"></div>
-      <div style="font-size:11.5px; color:var(--text-dim); margin-top:18px;">Pot trigar uns segons. No tanquis l'app.</div>
+      <div style="font-size:11.5px; color:var(--text-dim); margin-top:18px;" data-i18n="ocr_wait">Puede tardar unos segundos. No cierres la app.</div>
     </div>
   </div>
 
@@ -239,19 +247,19 @@
   <div class="overlay" id="pasteOverlay">
     <div class="sheet">
       <div class="sheet-handle"></div>
-      <h3>Enganxar text del calendari</h3>
-      <div class="field-hint" style="margin-bottom:10px;">
-        Obre el PDF o la web del club, selecciona tot el text, copia'l i enganxa'l aquí.
+      <h3 data-i18n="ocr_paste_title">Pegar texto del calendario</h3>
+      <div class="field-hint" style="margin-bottom:10px;" data-i18n="ocr_paste_hint">
+        Abre el PDF o la web del club, selecciona todo el texto, cópialo y pégalo aquí.
       </div>
       <div class="field">
         <textarea id="pasteText" rows="10"
           style="width:100%; background:var(--surface-2); border:1px solid var(--border);
                  border-radius:10px; padding:10px; color:var(--text);
                  font-family:'JetBrains Mono', monospace; font-size:12px;"
-          placeholder="Enganxa aquí el text…"></textarea>
+          data-i18n-ph="ocr_paste_ph" placeholder="Pega aquí el texto…"></textarea>
       </div>
-      <button class="btn-primary" id="pasteAnalyzeBtn">Analitzar</button>
-      <button class="btn-secondary" id="pasteCancelBtn">Cancel·la</button>
+      <button class="btn-primary" id="pasteAnalyzeBtn" data-i18n="ocr_analyze">Analizar</button>
+      <button class="btn-secondary" id="pasteCancelBtn" data-i18n="cal_cancel">Cancelar</button>
     </div>
   </div>
 
@@ -259,16 +267,16 @@
   <div class="overlay" id="ocrPreviewOverlay">
     <div class="sheet" style="max-height:92vh;">
       <div class="sheet-handle"></div>
-      <h3>Esdeveniments detectats</h3>
+      <h3 data-i18n="ocr_detected">Eventos detectados</h3>
       <div id="ocrPreviewInfo" style="font-size:12px; color:var(--text-dim); margin-bottom:12px;"></div>
       <div style="display:flex; gap:6px; margin-bottom:10px;">
-        <button class="theme-btn" id="ocrSelectAll" style="flex:1; font-size:11.5px;">Tots</button>
-        <button class="theme-btn" id="ocrSelectNone" style="flex:1; font-size:11.5px;">Cap</button>
+        <button class="theme-btn" id="ocrSelectAll" style="flex:1; font-size:11.5px;" data-i18n="ocr_select_all">Todos</button>
+        <button class="theme-btn" id="ocrSelectNone" style="flex:1; font-size:11.5px;" data-i18n="ocr_select_none">Ninguno</button>
       </div>
       <div id="ocrPreviewList" style="max-height:55vh; overflow-y:auto;
         border:1px solid var(--border); border-radius:10px; margin-bottom:14px;"></div>
-      <button class="btn-primary" id="ocrSaveBtn">Afegir seleccionats</button>
-      <button class="btn-secondary" id="ocrCancelBtn">Cancel·la</button>
+      <button class="btn-primary" id="ocrSaveBtn" data-i18n="ocr_add_selected">Añadir seleccionados</button>
+      <button class="btn-secondary" id="ocrCancelBtn" data-i18n="cal_cancel">Cancelar</button>
     </div>
   </div>
 
