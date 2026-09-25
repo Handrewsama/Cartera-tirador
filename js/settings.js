@@ -9,12 +9,23 @@ import { manualCheck } from './updater.js';
 import { APP_VERSION } from './config.js';
 import { t } from './i18n.js';
 
+/* Helper: afegeix listener només si l'element existeix */
+function on(id, evt, handler) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener(evt, handler);
+}
+
+function $id(id) {
+  return document.getElementById(id);
+}
+
 export async function initSettings({ onReload }) {
-  initFolderPicker();
-  initNotificationsUI();
+  /* ---------- Carpeta + notificacions ---------- */
+  try { initFolderPicker(); } catch (e) { console.warn('folder picker', e); }
+  try { initNotificationsUI(); } catch (e) { console.warn('notif UI', e); }
 
   /* ---------- Backup manual ---------- */
-  document.getElementById('exportBtn').addEventListener('click', async () => {
+  on('exportBtn', 'click', async () => {
     const payload = await exportAll();
     if (!payload.documents.length && !payload.events.length) {
       toast(t('more_backup_empty'));
@@ -27,11 +38,12 @@ export async function initSettings({ onReload }) {
     toast(ok ? t('more_backup_saved') : t('more_backup_error'));
   });
 
-  document.getElementById('importBtn').addEventListener('click', () => {
-    document.getElementById('importFile').click();
+  on('importBtn', 'click', () => {
+    const f = $id('importFile');
+    if (f) f.click();
   });
 
-  document.getElementById('importFile').addEventListener('change', e => {
+  on('importFile', 'change', e => {
     const file = e.target.files[0];
     e.target.value = '';
     if (!file) return;
@@ -51,7 +63,7 @@ export async function initSettings({ onReload }) {
     reader.readAsText(file);
   });
 
-  document.getElementById('wipeBtn').addEventListener('click', async () => {
+  on('wipeBtn', 'click', async () => {
     if (!confirm(t('more_danger_confirm'))) return;
     await wipeAll();
     toast(t('more_danger_done'));
@@ -60,32 +72,34 @@ export async function initSettings({ onReload }) {
 
   /* ---------- Seguretat ---------- */
   async function refreshSecUI() {
-    const status = document.getElementById('secStatus');
-    const setupBtn = document.getElementById('secSetupBtn');
-    const removeBtn = document.getElementById('secRemoveBtn');
-    const bioBtn = document.getElementById('secBioBtn');
+    const status = $id('secStatus');
+    const setupBtn = $id('secSetupBtn');
+    const removeBtn = $id('secRemoveBtn');
+    const bioBtn = $id('secBioBtn');
     if (!status) return;
 
     if (isPinSet()) {
       status.textContent = t('sec_pin_set');
-      setupBtn.style.display = 'none';
-      removeBtn.style.display = 'block';
-      if (isBiometricEnabled()) {
-        bioBtn.style.display = 'none';
-      } else if (await isBiometricAvailable()) {
-        bioBtn.style.display = 'block';
-      } else {
-        bioBtn.style.display = 'none';
+      if (setupBtn) setupBtn.style.display = 'none';
+      if (removeBtn) removeBtn.style.display = 'block';
+      if (bioBtn) {
+        if (isBiometricEnabled()) {
+          bioBtn.style.display = 'none';
+        } else if (await isBiometricAvailable()) {
+          bioBtn.style.display = 'block';
+        } else {
+          bioBtn.style.display = 'none';
+        }
       }
     } else {
       status.textContent = t('sec_pin_not_set');
-      setupBtn.style.display = 'block';
-      removeBtn.style.display = 'none';
-      bioBtn.style.display = 'none';
+      if (setupBtn) setupBtn.style.display = 'block';
+      if (removeBtn) removeBtn.style.display = 'none';
+      if (bioBtn) bioBtn.style.display = 'none';
     }
   }
 
-  document.getElementById('secSetupBtn').addEventListener('click', async () => {
+  on('secSetupBtn', 'click', async () => {
     const pin1 = prompt(t('sec_set_pin_prompt'));
     if (!pin1 || pin1.length < 4) { toast(t('sec_pin_short')); return; }
     const pin2 = prompt(t('sec_confirm_pin_prompt'));
@@ -95,7 +109,7 @@ export async function initSettings({ onReload }) {
     refreshSecUI();
   });
 
-  document.getElementById('secBioBtn').addEventListener('click', async () => {
+  on('secBioBtn', 'click', async () => {
     if (await registerBiometric()) {
       toast(t('sec_bio_enabled'));
       refreshSecUI();
@@ -104,7 +118,7 @@ export async function initSettings({ onReload }) {
     }
   });
 
-  document.getElementById('secRemoveBtn').addEventListener('click', () => {
+  on('secRemoveBtn', 'click', () => {
     if (!confirm(t('sec_remove_confirm'))) return;
     removePin();
     disableBiometric();
@@ -114,9 +128,9 @@ export async function initSettings({ onReload }) {
 
   /* ---------- Auto-backup ---------- */
   function refreshBackupUI() {
-    const status = document.getElementById('autoBackupStatus');
-    const toggle = document.getElementById('autoBackupToggle');
-    if (!status) return;
+    const status = $id('autoBackupStatus');
+    const toggle = $id('autoBackupToggle');
+    if (!status || !toggle) return;
     toggle.checked = isAutoBackupEnabled();
     const last = getLastBackupDate();
     const dateStr = last ? last.toLocaleDateString() : '—';
@@ -125,12 +139,12 @@ export async function initSettings({ onReload }) {
       : t('backup_auto_off');
   }
 
-  document.getElementById('autoBackupToggle').addEventListener('change', e => {
+  on('autoBackupToggle', 'change', e => {
     setAutoBackup(e.target.checked);
     refreshBackupUI();
   });
 
-  document.getElementById('backupNowBtn').addEventListener('click', async () => {
+  on('backupNowBtn', 'click', async () => {
     await performBackup();
     refreshBackupUI();
   });
@@ -149,14 +163,13 @@ export async function initSettings({ onReload }) {
   });
 
   /* ---------- Comprovació manual d'actualitzacions ---------- */
-  const checkBtn = document.getElementById('checkUpdateBtn');
-  const updateStatus = document.getElementById('updateStatus');
+  const updateStatus = $id('updateStatus');
   if (updateStatus) {
     updateStatus.textContent = t('more_update_current', { version: APP_VERSION });
   }
-  if (checkBtn) {
-    checkBtn.addEventListener('click', manualCheck);
-  }
+  on('checkUpdateBtn', 'click', () => {
+    manualCheck();
+  });
 
   /* ---------- Inicialitzacions ---------- */
   await refreshSecUI();

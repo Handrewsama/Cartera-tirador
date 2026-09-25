@@ -202,7 +202,7 @@ export default {
   common_save: 'Desar',
   common_ok: 'OK',
   common_close: 'Tancar',
-  boot_error: "Error en arrencar l'app"
+  boot_error: "Error en arrencar l'app",
   
   update_available: 'Hi ha una nova versió disponible',
   update_apply: 'Actualitzar',

@@ -81,58 +81,96 @@
 
     <!-- ============ MÉS ============ -->
     <section class="view" id="view-more">
-      <div class="section-head"><h2 data-i18n="more_title">Más</h2></div>
+        <div class="section-head"><h2 data-i18n="more_title">Más</h2></div>
+        <div class="card">
+            <div class="card-title" data-i18n="sec_title">Seguridad</div>
+            <div id="secStatus" class="card-text">—</div>
+            <button class="btn-primary" id="secSetupBtn" data-i18n="sec_setup">Configurar PIN</button>
+            <button class="btn-secondary" id="secBioBtn" style="display:none;" data-i18n="sec_enable_bio">Activar Face ID / Touch ID</button>
+            <button class="btn-secondary" id="secRemoveBtn" style="display:none; color:var(--danger); border-color:var(--danger);" data-i18n="sec_remove">Quitar PIN</button>
+        </div>
+                                                                                          
+        <div class="card">
+            <div class="card-title" data-i18n="more_language">Idioma</div>
+            <div class="theme-row" id="langRow">
+                <button class="theme-btn" data-lang="es">Español</button>
+                <button class="theme-btn" data-lang="ca">Català</button>
+            </div>
+        </div>
 
+        <div class="card">
+            <div class="card-title" data-i18n="more_folder">Carpeta de guardado</div>
+            <div id="folderStatus" class="card-text" data-i18n="more_folder_none">Ninguna carpeta configurada...</div>
+            <button class="btn-primary" id="pickFolderBtn" data-i18n="more_folder_pick">Elegir carpeta</button>
+            <button class="btn-secondary" id="clearFolderBtn" data-i18n="more_folder_clear">Quitar carpeta</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title" data-i18n="more_notif">Recordatorios</div>
+            <div id="notifStatus" class="card-text">—</div>
+            <button class="btn-primary" id="askNotifBtn" data-i18n="more_notif_ask">Activar notificaciones</button>
+            <button class="btn-secondary" id="testNotifBtn" data-i18n="more_notif_test">Prueba de notificación</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title" data-i18n="more_theme">Apariencia</div>
+            <div class="theme-row">
+                <button class="theme-btn" data-theme="auto" data-i18n="more_theme_auto">Auto</button>
+                <button class="theme-btn" data-theme="dark" data-i18n="more_theme_dark">Oscuro</button>
+                <button class="theme-btn" data-theme="light" data-i18n="more_theme_light">Claro</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" data-i18n="more_backup">Copia de seguridad</div>
+            <div class="card-text" data-i18n="more_backup_desc">Exporta todos los documentos y eventos en un solo archivo JSON.</div>
+            <button class="btn-primary" id="exportBtn" data-i18n="more_backup_export">Exportar copia</button>
+            <button class="btn-secondary" id="importBtn" data-i18n="more_backup_import">Importar copia</button>
+            <input type="file" accept="application/json,.json" id="importFile" style="display:none;">
+        </div>
+
+        <div class="card">
+            <div class="card-title" data-i18n="more_update">Actualizaciones</div>
+            <div id="updateStatus" class="card-text">—</div>
+            <button class="btn-primary" id="checkUpdateBtn" data-i18n="more_update_check">Buscar actualizaciones</button>
+        </div>
+
+              <!-- SEGURETAT -->
       <div class="card">
-        <div class="card-title" data-i18n="more_language">Idioma</div>
-        <div class="theme-row" id="langRow">
-          <button class="theme-btn" data-lang="es">Español</button>
-          <button class="theme-btn" data-lang="ca">Català</button>
+        <div class="card-title" data-i18n="sec_title">Seguridad</div>
+        <div id="secStatus" class="card-text">—</div>
+        <button class="btn-primary" id="secSetupBtn" data-i18n="sec_setup">Configurar PIN</button>
+        <button class="btn-secondary" id="secBioBtn" style="display:none;" data-i18n="sec_enable_bio">Activar Face ID / Touch ID</button>
+        <button class="btn-secondary" id="secRemoveBtn" style="display:none; color:var(--danger); border-color:var(--danger);" data-i18n="sec_remove">Quitar PIN</button>
+      </div>
+
+      <!-- AUTO-BACKUP -->
+      <div class="card">
+        <div class="card-title" data-i18n="backup_auto_title">Copia de seguridad automática</div>
+        <div id="autoBackupStatus" class="card-text">—</div>
+        <label style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+          <input type="checkbox" id="autoBackupToggle" style="width:auto;">
+          <span data-i18n="backup_auto_enable">Activar backup semanal</span>
+        </label>
+        <button class="btn-secondary" id="backupNowBtn" data-i18n="backup_now">Hacer backup ahora</button>
+      </div>
+
+      <!-- COMPRESSIÓ D'IMATGES -->
+      <div class="card">
+        <div class="card-title" data-i18n="img_compress_title">Compresión de imágenes</div>
+        <div class="card-text" data-i18n="img_compress_desc">Reduce el tamaño de las fotos antes de guardarlas. Ahorra espacio.</div>
+        <div class="theme-row" id="compressRow">
+          <button class="theme-btn" data-compress="off" data-i18n="img_off">Sin comprimir</button>
+          <button class="theme-btn" data-compress="medium" data-i18n="img_medium">Media</button>
+          <button class="theme-btn" data-compress="high" data-i18n="img_high">Alta</button>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title" data-i18n="more_folder">Carpeta de guardado</div>
-        <div id="folderStatus" class="card-text" data-i18n="more_folder_none">Ninguna carpeta configurada...</div>
-        <button class="btn-primary" id="pickFolderBtn" data-i18n="more_folder_pick">Elegir carpeta</button>
-        <button class="btn-secondary" id="clearFolderBtn" data-i18n="more_folder_clear">Quitar carpeta</button>
-      </div>
-
-      <div class="card">
-        <div class="card-title" data-i18n="more_notif">Recordatorios</div>
-        <div id="notifStatus" class="card-text">—</div>
-        <button class="btn-primary" id="askNotifBtn" data-i18n="more_notif_ask">Activar notificaciones</button>
-        <button class="btn-secondary" id="testNotifBtn" data-i18n="more_notif_test">Prueba de notificación</button>
-      </div>
-
-      <div class="card">
-        <div class="card-title" data-i18n="more_theme">Apariencia</div>
-        <div class="theme-row">
-          <button class="theme-btn" data-theme="auto" data-i18n="more_theme_auto">Auto</button>
-          <button class="theme-btn" data-theme="dark" data-i18n="more_theme_dark">Oscuro</button>
-          <button class="theme-btn" data-theme="light" data-i18n="more_theme_light">Claro</button>
+        <div class="card">
+            <div class="card-title" data-i18n="more_danger">Zona de peligro</div>
+            <div class="card-text" data-i18n="more_danger_desc">Borrar todos los documentos y eventos de este dispositivo.</div>
+            <button class="btn-secondary" id="wipeBtn" style="color:var(--danger); border-color:var(--danger);" data-i18n="more_danger_btn">Borrar todo</button>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title" data-i18n="more_backup">Copia de seguridad</div>
-        <div class="card-text" data-i18n="more_backup_desc">Exporta todos los documentos y eventos en un solo archivo JSON.</div>
-        <button class="btn-primary" id="exportBtn" data-i18n="more_backup_export">Exportar copia</button>
-        <button class="btn-secondary" id="importBtn" data-i18n="more_backup_import">Importar copia</button>
-        <input type="file" accept="application/json,.json" id="importFile" style="display:none;">
-      </div>
-
-      <div class="card">
-        <div class="card-title" data-i18n="more_update">Actualizaciones</div>
-        <div id="updateStatus" class="card-text">—</div>
-        <button class="btn-primary" id="checkUpdateBtn" data-i18n="more_update_check">Buscar actualizaciones</button>
-      </div>
-
-      <div class="card">
-        <div class="card-title" data-i18n="more_danger">Zona de peligro</div>
-        <div class="card-text" data-i18n="more_danger_desc">Borrar todos los documentos y eventos de este dispositivo.</div>
-        <button class="btn-secondary" id="wipeBtn" style="color:var(--danger); border-color:var(--danger);" data-i18n="more_danger_btn">Borrar todo</button>
-      </div>
     </section>
 
   </main>

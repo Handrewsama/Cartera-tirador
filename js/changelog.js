@@ -5,7 +5,7 @@
 
 export const CHANGELOG = [
   {
-    version: 'v6.1',
+    version: 'v6.3',
     date: '2026-09-25',
     title: { es: 'Novedades', ca: 'Novetats' },
     changes: {

@@ -2,7 +2,7 @@
   "name": "Cartera del Tirador",
   "short_name": "Cartera Tirador",
   "description": "Cartera privada de documents i calendari del tirador.",
-  "lang": "ca",
+  "lang": "es",
   "dir": "ltr",
   "start_url": "./index.html",
   "scope": "./",

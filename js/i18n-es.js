@@ -202,7 +202,7 @@ export default {
   common_save: 'Guardar',
   common_ok: 'OK',
   common_close: 'Cerrar',
-  boot_error: 'Error al arrancar la app'
+  boot_error: 'Error al arrancar la app',
 
   update_available: 'Hay una nueva versión disponible',
   update_apply: 'Actualizar',

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cartera-tirador-v6.1';
+const CACHE_NAME = 'cartera-tirador-v6.3';
 const APP_SHELL = [
   './',
   './index.html',

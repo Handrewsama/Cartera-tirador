@@ -13,7 +13,7 @@ export const COLORS = {
   controlada: '#1e90ff',
   oficial: '#2ed573',
   categoria: '#9b5de5',
-  avis: '#f15bb5',
+  avis: '#e20d0d',
   llicenciaF: '#ff6a2b'
 };
 
