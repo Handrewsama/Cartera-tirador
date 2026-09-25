@@ -11,7 +11,7 @@ let filterType = 'Tots';
 let filterWeapon = 'Totes';
 
 /* =========================================================
-   INICIALITZACIo
+   INICIALITZACIÓ
    ========================================================= */
 export async function initCalendar() {
   document.getElementById('prevMonth').addEventListener('click', () => {

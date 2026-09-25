@@ -18,9 +18,12 @@
 <div id="app">
 
   <header class="top">
-    <div class="brand"><span class="dot"></span><h1>Cartera del tirador</h1></div>
+  <div class="brand"><span class="dot"></span><h1>Cartera del tirador</h1></div>
+  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
     <span class="sub" id="clock">--:--</span>
-  </header>
+    <span id="appVersion" style="font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono', monospace;">v?</span>
+  </div>
+</header>
 
   <div id="alerta-obligatoria" class="alerta-caducitat">
     ⚠️ ATENCIÓ: No s'ha detectat cap tirada oficial/controlada en els últims 12 mesos. Risc de pèrdua de llicència!

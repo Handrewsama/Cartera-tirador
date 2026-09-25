@@ -3,7 +3,18 @@ import { initDocuments, reload as reloadDocs } from './documents.js';
 import { initCalendar, reload as reloadCalendar } from './calendar.js';
 import { initSettings } from './settings.js';
 
+/* =========================================================
+   VERSIÓ DE L'APP — canvia-ho cada cop que publiquis canvis
+   ========================================================= */
+const APP_VERSION = 'v5.0 · 2026-09-25';
+
+function showVersion() {
+  const el = document.getElementById('appVersion');
+  if (el) el.textContent = APP_VERSION;
+}
+
 async function boot() {
+  showVersion();
   initToast();
   initTheme();
   initClock();
@@ -18,7 +29,6 @@ async function boot() {
     onReload: async () => { await reloadDocs(); await reloadCalendar(); }
   });
 
-  // Comprova recordatoris un cop en arrencar
   setTimeout(() => reloadCalendar(), 800);
 }
 
