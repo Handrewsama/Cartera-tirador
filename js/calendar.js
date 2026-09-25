@@ -2,7 +2,7 @@ import { getAll, put, del, STORE_EVENTS } from './db.js';
 import { toast } from './ui.js';
 import { escapeHtml, ymd, TYPE_COLORS, TYPE_LABELS, WEAPON_LABELS } from './utils.js';
 import { checkDueReminders, downloadEventICS } from './notifications.js';
-import { runOCR, parseAnyCalendar, saveParsedEvents } from './ocr.js';
+import { extractTextFromFile, parseAnyCalendar, saveParsedEvents } from './ocr.js';
 
 let eventsCache = [];
 let currentMonth = new Date();
@@ -39,14 +39,14 @@ export async function initCalendar() {
   });
 
   /* ---------- OCR + Enganxar text ---------- */
-  document.getElementById('ocrBtn').addEventListener('click', () => {
-    document.getElementById('ocrFile').click();
-  });
-  document.getElementById('ocrFile').addEventListener('change', async e => {
-    const file = e.target.files[0];
-    e.target.value = '';
-    if (file) await processOCRFile(file);
-  });
+document.getElementById('ocrBtn').addEventListener('click', () => {
+  document.getElementById('ocrFile').click();
+});
+document.getElementById('ocrFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (file) await processAnyFile(file);
+});
 
   document.getElementById('pasteBtn').addEventListener('click', () => {
     document.getElementById('pasteText').value = '';
@@ -280,22 +280,31 @@ function checkLicenseAlert() {
 /* =========================================================
    OCR
    ========================================================= */
-async function processOCRFile(file) {
+async function processAnyFile(file) {
   const overlay = document.getElementById('ocrOverlay');
   const progress = document.getElementById('ocrProgress');
   const status = document.getElementById('ocrStatus');
   overlay.classList.add('show');
-  status.textContent = 'Carregant motor OCR…';
+  status.textContent = 'Preparant…';
   progress.textContent = '';
 
   try {
-    const text = await runOCR(file, pct => {
-      status.textContent = 'Llegint text…';
+    const name = (file.name || '').toLowerCase();
+    let statusMsg = 'Llegint el fitxer…';
+    if (name.endsWith('.pdf')) statusMsg = 'Llegint PDF…';
+    else if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv')) statusMsg = 'Llegint full de càlcul…';
+    else if (/\.(jpe?g|png|webp|heic|heif)$/i.test(name)) statusMsg = 'Llegint imatge (OCR)…';
+
+    status.textContent = statusMsg;
+
+    const { text, source } = await extractTextFromFile(file, pct => {
       progress.textContent = pct + '%';
     });
 
     status.textContent = 'Analitzant dates…';
-    const result = parseAnyCalendar(text);
+    progress.textContent = '';
+
+    const result = parseAnyCalendar(text, source);
 
     overlay.classList.remove('show');
 
@@ -304,26 +313,40 @@ async function processOCRFile(file) {
       return;
     }
 
-    showOCRPreview(result.events, result.kind);
+    showOCRPreview(result.events, result.kind, source);
   } catch (err) {
     console.error(err);
     overlay.classList.remove('show');
-    toast('Error llegint la imatge');
+    toast('Error: ' + (err.message || 'no s\'ha pogut llegir el fitxer'));
   }
 }
 
-function showOCRPreview(events, kind) {
+function showOCRPreview(events, kind, source) {
   const overlay = document.getElementById('ocrPreviewOverlay');
   const list = document.getElementById('ocrPreviewList');
   const info = document.getElementById('ocrPreviewInfo');
 
   const kindLabel = kind === 'grid'
-    ? 'Calendari anual de club'
-    : kind === 'license'
-    ? 'Calendari de llicència F / campionat'
-    : 'Calendari';
+  ? 'Calendari anual de club'
+  : kind === 'license'
+  ? 'Calendari de llicència F / campionat'
+  : kind === 'tabular'
+  ? 'Full de càlcul'
+  : 'Calendari';
 
-  info.textContent = `${kindLabel} · ${events.length} esdeveniments detectats. Revisa i desmarca el que no vulguis.`;
+const srcLabel = source === 'pdf-text'
+  ? 'PDF (text seleccionable)'
+  : source === 'pdf-ocr'
+  ? 'PDF escanejat (OCR)'
+  : source === 'spreadsheet'
+  ? 'Excel / CSV'
+  : source === 'image-ocr'
+  ? 'Imatge (OCR)'
+  : source === 'text'
+  ? 'Text pla'
+  : '';
+
+info.textContent = `${kindLabel}${srcLabel ? ' · ' + srcLabel : ''} · ${events.length} esdeveniments detectats. Revisa i desmarca el que no vulguis.`;
 
   list.innerHTML = events.map((ev, i) => `
     <label style="display:flex; gap:10px; align-items:flex-start;

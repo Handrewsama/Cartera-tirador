@@ -3,28 +3,11 @@ import { put, STORE_EVENTS } from './db.js';
 let worker = null;
 
 /* =========================================================
-   TESSERACT — inicialització sota demanda
+   CARREGADORS DE LLIBRERIES EXTERNES
    ========================================================= */
-async function ensureWorker(onProgress) {
-  if (worker) return worker;
-  if (!window.Tesseract) {
-    await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
-  }
-  worker = await Tesseract.createWorker('cat+spa', 1, {
-    logger: m => {
-      if (onProgress && m.status === 'recognizing text') {
-        onProgress(Math.round(m.progress * 100));
-      }
-    }
-  });
-  await worker.setParameters({
-    preserve_interword_spaces: '1'
-  });
-  return worker;
-}
-
 function loadScript(src) {
   return new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) return res();
     const s = document.createElement('script');
     s.src = src;
     s.onload = res;
@@ -33,7 +16,44 @@ function loadScript(src) {
   });
 }
 
-export async function runOCR(fileOrDataUrl, onProgress) {
+async function ensurePdfJs() {
+  if (window.pdfjsLib) return window.pdfjsLib;
+  await loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.js');
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.js';
+  return window.pdfjsLib;
+}
+
+async function ensureSheetJs() {
+  if (window.XLSX) return window.XLSX;
+  await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+  return window.XLSX;
+}
+
+async function ensureTesseract() {
+  if (window.Tesseract) return window.Tesseract;
+  await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+  return window.Tesseract;
+}
+
+/* =========================================================
+   TESSERACT — per a imatges
+   ========================================================= */
+async function ensureWorker(onProgress) {
+  if (worker) return worker;
+  const T = await ensureTesseract();
+  worker = await T.createWorker('cat+spa', 1, {
+    logger: m => {
+      if (onProgress && m.status === 'recognizing text') {
+        onProgress(Math.round(m.progress * 100));
+      }
+    }
+  });
+  await worker.setParameters({ preserve_interword_spaces: '1' });
+  return worker;
+}
+
+async function runTesseract(fileOrDataUrl, onProgress) {
   const w = await ensureWorker(onProgress);
   const { data } = await w.recognize(fileOrDataUrl);
   return data.text || '';
@@ -44,6 +64,130 @@ export async function terminateWorker() {
     try { await worker.terminate(); } catch {}
     worker = null;
   }
+}
+
+/* =========================================================
+   LLEGIR PDF (text seleccionable)
+   ========================================================= */
+async function readPdfText(file, onProgress) {
+  const pdfjsLib = await ensurePdfJs();
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let full = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    if (onProgress) onProgress(Math.round((p / pdf.numPages) * 100));
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    // Reconstruïm línies agrupant per Y
+    const items = content.items.map(it => ({
+      str: it.str,
+      x: it.transform[4],
+      y: it.transform[5]
+    }));
+    // Agrupa per y (tolerància 3 unitats)
+    const lines = [];
+    let current = null;
+    items.sort((a, b) => b.y - a.y || a.x - b.x);
+    for (const it of items) {
+      if (!current || Math.abs(current.y - it.y) > 3) {
+        if (current) lines.push(current);
+        current = { y: it.y, items: [it] };
+      } else {
+        current.items.push(it);
+      }
+    }
+    if (current) lines.push(current);
+    // Construeix el text de la pàgina
+    const pageText = lines
+      .map(l => l.items.sort((a, b) => a.x - b.x).map(i => i.str).join(' '))
+      .join('\n');
+    full += pageText + '\n';
+  }
+  return full;
+}
+
+/* =========================================================
+   LLEGIR PDF ESCANEJAT (sense capa de text) → OCR
+   ========================================================= */
+async function readPdfViaOCR(file, onProgress) {
+  const pdfjsLib = await ensurePdfJs();
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let full = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    if (onProgress) onProgress(Math.round((p / pdf.numPages) * 100));
+    const page = await pdf.getPage(p);
+    const viewport = page.getViewport({ scale: 2.0 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    const dataUrl = canvas.toDataURL('image/png');
+    const text = await runTesseract(dataUrl);
+    full += text + '\n';
+  }
+  return full;
+}
+
+/* =========================================================
+   LLEGIR EXCEL (.xlsx, .xls) o CSV
+   ========================================================= */
+async function readSpreadsheet(file) {
+  const XLSX = await ensureSheetJs();
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array' });
+  let full = '';
+  for (const name of wb.SheetNames) {
+    const sheet = wb.Sheets[name];
+    // Converteix a text pla (cada fila com una línia, cel·les separades per tab)
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+    for (const row of rows) {
+      const line = row.map(c => String(c).trim()).filter(Boolean).join('\t');
+      if (line) full += line + '\n';
+    }
+    full += '\n';
+  }
+  return full;
+}
+
+/* =========================================================
+   ENTRADA PRINCIPAL — llegeix qualsevol tipus de fitxer
+   ========================================================= */
+export async function extractTextFromFile(file, onProgress) {
+  const name = (file.name || '').toLowerCase();
+  const type = file.type || '';
+
+  if (type === 'application/pdf' || name.endsWith('.pdf')) {
+    const text = await readPdfText(file, onProgress);
+    // Si el PDF no té capa de text (escanejat), el text serà molt curt
+    if (text.replace(/\s/g, '').length < 50) {
+      const ocrText = await readPdfViaOCR(file, onProgress);
+      return { text: ocrText, source: 'pdf-ocr' };
+    }
+    return { text, source: 'pdf-text' };
+  }
+
+  if (
+    name.endsWith('.xlsx') || name.endsWith('.xls') ||
+    name.endsWith('.csv') || name.endsWith('.ods') ||
+    type.includes('spreadsheet') || type.includes('excel') || type === 'text/csv'
+  ) {
+    const text = await readSpreadsheet(file);
+    return { text, source: 'spreadsheet' };
+  }
+
+  if (type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif)$/i.test(name)) {
+    const text = await runTesseract(file, onProgress);
+    return { text, source: 'image-ocr' };
+  }
+
+  if (type === 'text/plain' || name.endsWith('.txt')) {
+    const text = await file.text();
+    return { text, source: 'text' };
+  }
+
+  throw new Error('Format no suportat: ' + (name || type));
 }
 
 /* =========================================================
@@ -85,7 +229,8 @@ export function parseLicenseCalendar(rawText) {
   const datePatterns = [
     /^(\d{1,2})\s+(?:de\s+)?([a-záéíóúñàèéíòóúç]+)\s+(?:de\s+)?(\d{4})/i,
     /^(\d{1,2})\s+(?:de\s+)?([a-záéíóúñàèéíòóúç]+)\s*$/i,
-    /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/
+    /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/,
+    /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})(?!\d)/
   ];
 
   function parseDate(line) {
@@ -103,7 +248,8 @@ export function parseLicenseCalendar(rawText) {
       }
       const day = parseInt(m[1], 10);
       const month = parseInt(m[2], 10);
-      const year = parseInt(m[3], 10);
+      let year = parseInt(m[3], 10);
+      if (year < 100) year += 2000;
       if (day < 1 || day > 31 || month < 1 || month > 12) continue;
       return { day, month, year, matchLen: m[0].length };
     }
@@ -152,7 +298,7 @@ export function parseLicenseCalendar(rawText) {
     else if (/carabina|rifle/i.test(title)) weapon = 'carabina';
     else if (/escopeta/i.test(title)) weapon = 'escopeta';
 
-    let notes = 'Importat per OCR';
+    let notes = 'Importat automàticament';
     if (type === 'llicencia-f') notes = 'Prova d\'obtenció de llicència F — 8:30h';
     else if (type === 'oficial') notes = 'Fase de campionat — 15:00h';
 
@@ -166,7 +312,7 @@ export function parseLicenseCalendar(rawText) {
       reminderDaysBefore: type === 'oficial' ? 7 : 3,
       notified: false,
       createdAt: Date.now(),
-      source: 'ocr-license'
+      source: 'import'
     });
 
     if (consumed === 2) i++;
@@ -281,7 +427,7 @@ export function parseGridCalendar(rawText, defaultYear) {
         reminderDaysBefore: 3,
         notified: false,
         createdAt: Date.now(),
-        source: 'ocr-grid'
+        source: 'import-grid'
       });
     }
   }
@@ -296,9 +442,147 @@ export function parseGridCalendar(rawText, defaultYear) {
 }
 
 /* =========================================================
-   DETECCIÓ AUTOMÀTICA + GUARDAR
+   PARSER 3 — TAULA AMB COLUMNES (Excel/CSV)
+   Detecta columnes Data / Títol / Tipus / Arma
    ========================================================= */
-export function parseAnyCalendar(rawText) {
+export function parseTabularCalendar(rawText, defaultYear) {
+  const lines = rawText
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+
+  if (lines.length < 2) return [];
+
+  // Detecció de separador (tab, ; o ,)
+  const sep = lines[0].includes('\t') ? '\t'
+            : lines[0].includes(';') ? ';'
+            : lines[0].includes(',') ? ','
+            : '\t';
+
+  const headers = lines[0].split(sep).map(h => h.trim().toLowerCase());
+  const idx = {
+    date: headers.findIndex(h => /fecha|data|date|dia|día/.test(h)),
+    title: headers.findIndex(h => /titulo|títol|title|nombre|nom|competici|evento|esdeveniment/.test(h)),
+    type: headers.findIndex(h => /tipo|tipus|type|categoria/.test(h)),
+    weapon: headers.findIndex(h => /arma|modalidad|modalitat|weapon/.test(h)),
+    notes: headers.findIndex(h => /nota|observ|comentari/.test(h))
+  };
+
+  // Si no troba cap columna mínima, no és tabular
+  if (idx.date < 0 && idx.title < 0) return [];
+
+  const monthNames = {
+    enero: 1, gener: 1, feb: 2, febrer: 2, mar: 3, març: 3,
+    abr: 4, abril: 4, may: 5, mayo: 5, maig: 5, jun: 6, junio: 6, juny: 6,
+    jul: 7, julio: 7, juliol: 7, ago: 8, agosto: 8, agost: 8,
+    sep: 9, septiembre: 9, setembre: 9, oct: 10, octubre: 10,
+    nov: 11, noviembre: 11, novembre: 11, dic: 12, diciembre: 12, desembre: 12
+  };
+
+  function parseDate(str) {
+    if (!str) return null;
+    str = String(str).trim();
+    // DD/MM/YYYY o DD-MM-YYYY
+    let m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+    if (m) {
+      const d = parseInt(m[1], 10);
+      const mo = parseInt(m[2], 10);
+      let y = parseInt(m[3], 10);
+      if (y < 100) y += 2000;
+      if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) {
+        return new Date(y, mo - 1, d);
+      }
+    }
+    // YYYY-MM-DD
+    m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+    // 15 de enero de 2026
+    m = str.match(/^(\d{1,2})\s+(?:de\s+)?([a-záéíóúñàèéíòóúç]+)/i);
+    if (m) {
+      const d = parseInt(m[1], 10);
+      const mo = monthNames[m[2].toLowerCase()];
+      if (d >= 1 && d <= 31 && mo) {
+        return new Date(defaultYear || new Date().getFullYear(), mo - 1, d);
+      }
+    }
+    return null;
+  }
+
+  const events = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split(sep).map(c => c.trim());
+    if (cells.every(c => !c)) continue;
+
+    const dateStr = idx.date >= 0 ? cells[idx.date] : '';
+    const date = parseDate(dateStr);
+    if (!date) continue;
+
+    const title = idx.title >= 0 ? cells[idx.title] : 'Esdeveniment';
+    if (!title) continue;
+
+    let type = 'avis';
+    if (idx.type >= 0) {
+      const t = cells[idx.type].toLowerCase();
+      if (/control/.test(t)) type = 'controlada';
+      else if (/oficial|campionat|fase/.test(t)) type = 'oficial';
+      else if (/categor/.test(t)) type = 'categoria';
+      else if (/licen/.test(t)) type = 'llicencia-f';
+      else if (/av[ií]s|programa/.test(t)) type = 'avis';
+    } else {
+      const t = title.toLowerCase();
+      if (/solicitud\s+licencia|obtenci[oó]n\s+licencia|licencia\s+tipo\s+["']?f/i.test(t)) type = 'llicencia-f';
+      else if (/fase\s+campeonato|fase\s+campionat/i.test(t)) type = 'oficial';
+      else if (/control|entrenament/i.test(t)) type = 'controlada';
+      else if (/categor|ascens/i.test(t)) type = 'categoria';
+      else if (/oficial|copa|campeonato/i.test(t)) type = 'oficial';
+    }
+
+    let weapon = '';
+    const wSrc = (idx.weapon >= 0 ? cells[idx.weapon] + ' ' : '') + title;
+    if (/9\s*mm/i.test(wSrc)) weapon = 'pistola-9mm';
+    else if (/fuego\s+central/i.test(wSrc)) weapon = 'pistola-foc-central';
+    else if (/deportiva/i.test(wSrc)) weapon = 'pistola-deportiva';
+    else if (/standard/i.test(wSrc)) weapon = 'pistola-standard';
+    else if (/pistola/i.test(wSrc)) weapon = 'pistola';
+    else if (/carabina|rifle/i.test(wSrc)) weapon = 'carabina';
+    else if (/escopeta/i.test(wSrc)) weapon = 'escopeta';
+    else if (/aire/i.test(wSrc)) weapon = 'aire';
+
+    const notes = idx.notes >= 0 ? cells[idx.notes] : 'Importat de full de càlcul';
+
+    events.push({
+      date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+      title: title.slice(0, 100),
+      type,
+      weapon,
+      notes,
+      reminder: true,
+      reminderDaysBefore: type === 'oficial' ? 7 : 3,
+      notified: false,
+      createdAt: Date.now(),
+      source: 'import-tabular'
+    });
+  }
+
+  const seen = new Set();
+  return events.filter(e => {
+    const key = e.date + '|' + e.title.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/* =========================================================
+   DETECCIÓ AUTOMÀTICA
+   ========================================================= */
+export function parseAnyCalendar(rawText, hintSource) {
+  // Si ve d'un full de càlcul, prova primer el parser tabular
+  if (hintSource === 'spreadsheet') {
+    const tab = parseTabularCalendar(rawText);
+    if (tab.length > 0) return { kind: 'tabular', events: tab };
+  }
+
   if (/fase\s+campeonato|solicitud\s+licencia|obtenci[oó]n\s+licencia/i.test(rawText)) {
     return { kind: 'license', events: parseLicenseCalendar(rawText) };
   }
@@ -308,13 +592,20 @@ export function parseAnyCalendar(rawText) {
     return { kind: 'grid', events: parseGridCalendar(rawText) };
   }
 
+  // Prova tots i queda't amb el que doni més events
   const a = parseLicenseCalendar(rawText);
   const b = parseGridCalendar(rawText);
-  return b.length > a.length
-    ? { kind: 'grid', events: b }
-    : { kind: 'license', events: a };
+  const c = parseTabularCalendar(rawText);
+
+  const best = [a, b, c].reduce((max, cur) => cur.length > max.length ? cur : max, []);
+  if (best === a) return { kind: 'license', events: a };
+  if (best === b) return { kind: 'grid', events: b };
+  return { kind: 'tabular', events: c };
 }
 
+/* =========================================================
+   GUARDAR
+   ========================================================= */
 export async function saveParsedEvents(events) {
   let ok = 0;
   for (const ev of events) {
